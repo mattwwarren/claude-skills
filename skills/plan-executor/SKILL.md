@@ -52,7 +52,13 @@ Each agent prompt MUST include:
 1. The specific task description
 2. Relevant file paths and context from the plan
 3. Coding conventions: "Follow ruff, mypy, and project conventions. For file operations, use Read/Write tools instead of Bash. Do NOT use cp, mv, or cat commands."
-4. Instruction to report completion clearly
+4. Agent constraints: "You CANNOT run npm/pip install, chmod, or write to ~/.claude/. Use Read/Write tools for file operations, not Bash cp/mv/cat."
+5. Instruction to report completion clearly
+
+**Before dispatching agents**, the primary session should handle:
+- Package installations (`npm install`, `pip install`, etc.)
+- File permission changes (`chmod`)
+- Any writes to `~/.claude/` or outside the workspace
 
 After independent tasks complete, spawn agents for dependent tasks in dependency order.
 
