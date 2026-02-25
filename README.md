@@ -6,11 +6,27 @@ No dependencies. No scripts. Just instructional markdown.
 
 ## Available Skills
 
+### Session Management
+
 | Skill | What It Does |
 |-------|-------------|
+| [session-done](skills/session-done/) | Wrap up work sessions with handoff generation and `cw done` signal |
 | [handoff](skills/handoff/) | Structured session handoffs for context exhaustion, debug forks, and scope creep |
-| [plan-executor](skills/plan-executor/) | Phase-by-phase plan execution with parallel sub-agents |
 | [debug-triage](skills/debug-triage/) | Structured debugging with issue tracking, escalation, and postmortems |
+
+### Plan Execution
+
+| Skill | What It Does |
+|-------|-------------|
+| [plan-executor](skills/plan-executor/) | Phase-by-phase plan execution with parallel sub-agents |
+
+### Multi-Session Orchestration (cw CLI)
+
+| Skill | What It Does |
+|-------|-------------|
+| [queue-plan](skills/queue-plan/) | Queue approved plans for implementation via the `cw` task queue |
+| [queue-debt](skills/queue-debt/) | Queue tech debt items with optional priority |
+| [pull-and-execute](skills/pull-and-execute/) | Claim queue items, spawn agent teams, review, and complete |
 
 ## Quick Start
 
@@ -49,8 +65,7 @@ Open any `skills/<name>/SKILL.md` and paste its contents into your `CLAUDE.md`.
 
 ```bash
 ./install.sh handoff              # Print one skill to stdout
-./install.sh plan-executor        # Print another
-./install.sh debug-triage         # Print another
+./install.sh queue-plan           # Print another
 ./install.sh --list               # Show available skills
 ./install.sh --all                # Print all skills
 ./install.sh handoff >> CLAUDE.md # Append to your config
@@ -80,8 +95,11 @@ These skills are designed as a system:
 
 1. **plan-executor** breaks large tasks into phases and executes them with sub-agents
 2. Between phases (or when context runs low), **handoff** generates structured handoff documents
-3. When debugging gets stuck, **debug-triage** tracks issues and can escalate to background agents
-4. Debug triage's "debug fork" pattern produces handoffs via the **handoff** skill
+3. **session-done** wraps up normal sessions and signals `cw done`
+4. When debugging gets stuck, **debug-triage** tracks issues and can escalate to background agents
+5. Debug triage's "debug fork" pattern produces handoffs via the **handoff** skill
+6. **queue-plan** and **queue-debt** feed work into the `cw` task queue
+7. **pull-and-execute** claims and executes queued items across sessions
 
 Each skill works independently, but they're most effective together.
 

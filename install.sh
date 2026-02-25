@@ -11,9 +11,13 @@ Usage: install.sh <skill-name> [options]
 Print a skill's system prompt snippet to stdout for piping or appending.
 
 Skills:
-  handoff          Session handoff generation for abnormal endings
-  plan-executor    Agent-spawning plan executor with phase orchestration
-  debug-triage     Structured debugging with issue tracking and escalation
+  handoff            Session handoff generation for abnormal endings
+  session-done       Wrap up work session with handoff and cw done signal
+  debug-triage       Structured debugging with issue tracking and escalation
+  plan-executor      Phase-by-phase plan execution with parallel sub-agents
+  queue-plan         Queue approved plans for implementation (cw CLI)
+  queue-debt         Queue tech debt items with priority (cw CLI)
+  pull-and-execute   Claim queue items, spawn agents, review, complete
 
 Options:
   --list           List available skills

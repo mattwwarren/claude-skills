@@ -71,13 +71,48 @@ Key constraints that make this reliable:
 - **Sequential phases** - don't start Phase 2 until Phase 1 passes integration checks
 - **Each agent gets full context** - task description, relevant files, conventions to follow
 
+## Multi-Session Orchestration
+
+A single Claude Code session has limited context. But many tasks require more work than one session can hold. Multi-session orchestration solves this with a **task queue** pattern:
+
+1. **Planning sessions** analyze requirements, create plans, and queue work items
+2. **Implementation sessions** claim items from the queue and execute them
+3. **Debt sessions** pick up low-priority items queued during implementation
+
+The `cw` CLI provides the queue infrastructure. Skills like `queue-plan`, `queue-debt`, and `pull-and-execute` provide the Claude-side integration.
+
+### Session Specialization
+
+Different sessions can specialize by purpose:
+
+| Purpose | What It Does | Fed By |
+|---------|-------------|--------|
+| `impl` | Feature implementation | `/queue-plan` |
+| `debt` | Tech debt cleanup | `/queue-debt`, review LOW findings |
+| `explore` | Research and investigation | Manual queuing |
+| `idea` | Prototyping and experiments | Manual queuing |
+
+### Queue-Driven Execution
+
+The `pull-and-execute` skill implements a complete execution loop:
+- **Claim** an item from the queue
+- **Plan** by reading context and assessing scope
+- **Implement** with parallel agents for medium/large work
+- **Review** the implementation for quality
+- **Fix** any findings (max 2 iterations)
+- **Complete** with quality gates, commit, and queue update
+
+This enables continuous, hands-off execution across session boundaries.
+
 ## Skill Synergies
 
-These three skills are designed to work together:
+These skills are designed to work together as a system:
 
-- **Plan executor** generates **handoffs** between phases and at session boundaries
+- **plan-executor** executes phases with parallel sub-agents and generates **handoffs** between them
+- **session-done** wraps up sessions and signals `cw done` to free the session for new work
 - **Debug triage** produces **debug fork handoffs** when stuck, which the handoff skill formats
-- **Plan executor** can **escalate** stuck tasks to debug triage patterns (spawn investigation agents)
-- All three use the same **fresh-context principle** for their output documents
+- **queue-plan** and **queue-debt** feed work to **pull-and-execute** across sessions
+- **pull-and-execute** claims queued items, implements them, and loops back for more
+- All skills use the same **fresh-context principle** for their output documents
 
 You can use each skill independently, but they're most powerful as a system.
