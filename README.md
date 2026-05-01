@@ -1,107 +1,126 @@
 # claude-skills
 
-Reusable skills for the [Claude Code](https://docs.anthropic.com/en/docs/claude-code) AI assistant. Each skill is a system prompt snippet you paste into your project's `CLAUDE.md` to teach Claude structured workflows.
+A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin marketplace of reusable skills for session management, plan execution, and multi-session orchestration.
 
-No dependencies. No scripts. Just instructional markdown.
-
-## Available Skills
-
-### Session Management
-
-| Skill | What It Does |
-|-------|-------------|
-| [session-done](skills/session-done/) | Wrap up work sessions with handoff generation and `cw done` signal |
-| [handoff](skills/handoff/) | Structured session handoffs for context exhaustion, debug forks, and scope creep |
-| [debug-triage](skills/debug-triage/) | Structured debugging with issue tracking, escalation, and postmortems |
-
-### Plan Execution
-
-| Skill | What It Does |
-|-------|-------------|
-| [plan-executor](skills/plan-executor/) | Phase-by-phase plan execution with parallel sub-agents |
-
-### Multi-Session Orchestration (cw CLI)
-
-| Skill | What It Does |
-|-------|-------------|
-| [queue-plan](skills/queue-plan/) | Queue approved plans for implementation via the `cw` task queue |
-| [queue-debt](skills/queue-debt/) | Queue tech debt items with optional priority |
-| [pull-and-execute](skills/pull-and-execute/) | Claim queue items, spawn agent teams, review, and complete |
-
-## Quick Start
-
-```bash
-# 1. Clone (or add as submodule)
-git clone https://github.com/mattwwarren/claude-skills.git
-
-# 2. Install a skill
-./claude-skills/install.sh handoff >> ./CLAUDE.md
-
-# 3. Use it
-# Claude now knows how to generate structured handoffs
-```
+Skills are auto-loaded by Claude Code when their description matches the situation - no copy-paste, no `CLAUDE.md` edits.
 
 ## Installation
 
-### Option A: Git Submodule (recommended for repos)
+Add this repo as a marketplace, then install the plugins you want:
 
 ```bash
-git submodule add https://github.com/mattwwarren/claude-skills.git
-./claude-skills/install.sh handoff >> ./CLAUDE.md
+# In any Claude Code session
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install session-management@claude-skills
+/plugin install plan-execution@claude-skills
+/plugin install cw-orchestration@claude-skills
 ```
 
-### Option B: Standalone Clone
+`/plugin` lists installed plugins and lets you toggle them on or off per project.
 
-```bash
-git clone https://github.com/mattwwarren/claude-skills.git
-./claude-skills/install.sh --all >> ./CLAUDE.md
-```
+## Plugins
 
-### Option C: Copy-Paste
+### `session-management`
 
-Open any `skills/<name>/SKILL.md` and paste its contents into your `CLAUDE.md`.
+Skills for session boundaries - normal endings, abnormal endings, and structured debugging.
 
-## install.sh
+| Skill | Triggers When |
+|-------|---------------|
+| [session-done](plugins/session-management/skills/session-done/) | Wrapping up a normal session at a clean stopping point. Generates a handoff and signals `cw done`. |
+| [handoff](plugins/session-management/skills/handoff/) | Context window 80%+ full, debug attempts stalled (debug fork), or scope creep. Generates self-contained handoff documents. |
+| [debug-triage](plugins/session-management/skills/debug-triage/) | Multi-issue or long-running debugging. Tracks issues, supports agent escalation, generates postmortems. |
 
-```bash
-./install.sh handoff              # Print one skill to stdout
-./install.sh queue-plan           # Print another
-./install.sh --list               # Show available skills
-./install.sh --all                # Print all skills
-./install.sh handoff >> CLAUDE.md # Append to your config
-```
+### `plan-execution`
 
-## Skill Format
+| Skill | Triggers When |
+|-------|---------------|
+| [plan-executor](plugins/plan-execution/skills/plan-executor/) | Given an approved plan file (H2 phases, checkbox tasks) to execute. Phase-by-phase with parallel sub-agents. |
 
-Each skill follows this structure:
+### `cw-orchestration`
 
-```
-skills/<name>/
-├── README.md    # User documentation, examples, installation guide
-└── SKILL.md     # System prompt snippet (this is what gets installed)
+Skills for the [`cw`](https://github.com/mattwwarren/cw) task queue - lets work flow across sessions.
 
-templates/<name>/
-├── README.md    # Template usage guide
-└── *.md         # Fill-in-the-blank templates for skill outputs
-```
-
-- **SKILL.md** is the system prompt snippet - instructional text that teaches Claude the behavior
-- **README.md** is for humans - explains what the skill does and how to use it
-- **templates/** are reference templates for the documents each skill generates
+| Skill | Triggers When |
+|-------|---------------|
+| [queue-plan](plugins/cw-orchestration/skills/queue-plan/) | Approved plan ready for implementation but not in this session. |
+| [queue-debt](plugins/cw-orchestration/skills/queue-debt/) | Tech debt surfaces but is out of scope for the current task. |
+| [pull-and-execute](plugins/cw-orchestration/skills/pull-and-execute/) | Claim and execute the next queued item end-to-end. |
 
 ## How Skills Work Together
 
 These skills are designed as a system:
 
-1. **plan-executor** breaks large tasks into phases and executes them with sub-agents
-2. Between phases (or when context runs low), **handoff** generates structured handoff documents
-3. **session-done** wraps up normal sessions and signals `cw done`
-4. When debugging gets stuck, **debug-triage** tracks issues and can escalate to background agents
-5. Debug triage's "debug fork" pattern produces handoffs via the **handoff** skill
-6. **queue-plan** and **queue-debt** feed work into the `cw` task queue
-7. **pull-and-execute** claims and executes queued items across sessions
+1. **plan-executor** breaks large tasks into phases and executes them with sub-agents.
+2. Between phases, or when context runs low, **handoff** generates self-contained handoff documents.
+3. **session-done** wraps up normal sessions and signals `cw done`.
+4. When debugging gets stuck, **debug-triage** tracks issues and can escalate to background agents.
+5. The **debug fork** pattern from `handoff` produces two tracks - main work and isolated investigation.
+6. **queue-plan** and **queue-debt** push work onto the `cw` task queue.
+7. **pull-and-execute** claims and executes queued items in fresh sessions.
 
 Each skill works independently, but they're most effective together.
+
+## Repository Layout
+
+```
+.
+├── .claude-plugin/
+│   └── marketplace.json              # Marketplace manifest
+├── plugins/
+│   ├── session-management/
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   └── skills/
+│   │       ├── handoff/
+│   │       │   ├── SKILL.md          # Frontmatter + system prompt
+│   │       │   ├── README.md         # Human-facing documentation
+│   │       │   └── templates/        # Output document templates
+│   │       ├── session-done/
+│   │       └── debug-triage/
+│   ├── plan-execution/
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/plan-executor/
+│   └── cw-orchestration/
+│       ├── .claude-plugin/plugin.json
+│       └── skills/{queue-plan,queue-debt,pull-and-execute}/
+├── CONCEPTS.md
+├── LICENSE
+├── README.md
+└── install.sh                        # Legacy: print SKILL.md to stdout
+```
+
+Each `SKILL.md` starts with YAML frontmatter:
+
+```yaml
+---
+name: skill-name
+description: Use when ... (this is what Claude matches against to decide whether to invoke the skill)
+---
+```
+
+## Local Development
+
+To work against this marketplace from a local checkout:
+
+```bash
+git clone https://github.com/mattwwarren/claude-skills.git
+# In Claude Code:
+/plugin marketplace add ./claude-skills
+/plugin install session-management@claude-skills
+```
+
+## Legacy `install.sh`
+
+For users who still want to paste skill bodies into a `CLAUDE.md`:
+
+```bash
+./install.sh --list                           # List skills across all plugins
+./install.sh handoff                          # Print one skill to stdout
+./install.sh handoff >> ./CLAUDE.md           # Append to a project CLAUDE.md
+./install.sh --all >> ./CLAUDE.md             # Print every skill
+```
+
+Prefer the marketplace install path - skills load only when relevant, keeping the project's `CLAUDE.md` focused on project-specific guidance.
 
 ## Philosophy
 
@@ -114,12 +133,17 @@ See [CONCEPTS.md](CONCEPTS.md) for the ideas behind these skills:
 
 ## Contributing
 
-To add a new skill:
+To add a new skill to an existing plugin:
 
-1. Create `skills/<name>/SKILL.md` with the system prompt snippet
-2. Create `skills/<name>/README.md` with documentation
-3. Optionally add `templates/<name>/` for output templates
-4. The skill automatically appears in `./install.sh --list`
+1. Create `plugins/<plugin>/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`) and the skill body.
+2. Create `plugins/<plugin>/skills/<name>/README.md` with human-facing documentation.
+3. Optionally add `plugins/<plugin>/skills/<name>/templates/` for output templates the skill references.
+
+To add a new plugin:
+
+1. Create `plugins/<plugin>/.claude-plugin/plugin.json` with `name`, `version`, `description`, etc.
+2. Add a `skills/` directory and one or more skills following the structure above.
+3. Add an entry for the plugin in `.claude-plugin/marketplace.json`.
 
 ## License
 

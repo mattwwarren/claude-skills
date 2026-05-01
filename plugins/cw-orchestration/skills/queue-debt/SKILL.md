@@ -1,3 +1,8 @@
+---
+name: queue-debt
+description: Use when tech debt or a follow-up cleanup item surfaces during work but is out of scope for the current session - records it onto the cw task queue with an optional priority so a dedicated debt session can pick it up later.
+---
+
 # Queue Tech Debt Item
 
 Add a tech debt work item to the task queue for a dedicated debt session to pick up.

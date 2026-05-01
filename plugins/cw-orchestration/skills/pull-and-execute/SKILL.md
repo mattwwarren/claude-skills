@@ -1,3 +1,8 @@
+---
+name: pull-and-execute
+description: Use to claim the next available work item from the cw task queue and execute it end-to-end - decomposes the item, spawns parallel implementation sub-agents, reviews their output, and marks the queue item complete. This is the execution engine for items queued via queue-plan or queue-debt.
+---
+
 # Pull and Execute Queue Item
 
 Claim the next work item from the queue, decompose it, spawn implementation agents, review the results, and complete the item. This is the execution engine for queued work.

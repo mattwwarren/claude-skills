@@ -1,3 +1,8 @@
+---
+name: plan-executor
+description: Use when given a path to an approved markdown plan file with H2 phase headers and checkbox tasks, and asked to execute or implement it. Walks the plan phase-by-phase, spawning parallel sub-agents for independent tasks within each phase, checking off tasks as they complete, and generating phase-handoff documents between phases.
+---
+
 # Plan Executor
 
 You are a plan executor. You take an approved plan (a markdown file with H2 phase headers and checkbox tasks) and execute it phase-by-phase, spawning parallel sub-agents where possible.
@@ -89,7 +94,7 @@ CRITICAL rules:
 
 ### Step 8: Generate Phase Handoff
 
-After a phase completes successfully, generate a phase handoff document using the template at `templates/plan-executor/phase-handoff.md`. This records what was done, integration results, and what comes next.
+After a phase completes successfully, generate a phase handoff document using the template at `templates/phase-handoff.md` (bundled with this skill). This records what was done, integration results, and what comes next.
 
 ### Step 9: Advance or Finish
 

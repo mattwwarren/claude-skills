@@ -131,7 +131,7 @@ Claude reads the plan, finds the first unchecked task, and resumes from there.
 
 ## Relationship to Handoff Skill
 
-The plan executor generates **phase handoffs** between phases using the template at `templates/plan-executor/phase-handoff.md`. These are lighter-weight than full session handoffs.
+The plan executor generates **phase handoffs** between phases using the template at `templates/phase-handoff.md` (bundled with this skill). These are lighter-weight than full session handoffs.
 
 For full session handoffs (context exhaustion, debug forks, scope changes), use the handoff skill directly. The plan executor will invoke the handoff skill when session boundaries are reached mid-plan.
 

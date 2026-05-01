@@ -1,0 +1,40 @@
+{
+  "name": "claude-skills",
+  "owner": {
+    "name": "Matt Warren",
+    "url": "https://github.com/mattwwarren"
+  },
+  "metadata": {
+    "description": "Reusable Claude Code Skills for session management, plan execution, and multi-session orchestration via the cw CLI.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "session-management",
+      "source": "./plugins/session-management",
+      "description": "Structured session handoffs, session-done wrap-ups, and debug triage with issue tracking and escalation.",
+      "version": "1.0.0",
+      "category": "workflow",
+      "keywords": ["handoff", "session", "debug", "triage", "context"],
+      "license": "Unlicense"
+    },
+    {
+      "name": "plan-execution",
+      "source": "./plugins/plan-execution",
+      "description": "Phase-by-phase plan execution with parallel sub-agents, working from markdown plans with checkbox tasks.",
+      "version": "1.0.0",
+      "category": "workflow",
+      "keywords": ["plan", "executor", "phases", "agents"],
+      "license": "Unlicense"
+    },
+    {
+      "name": "cw-orchestration",
+      "source": "./plugins/cw-orchestration",
+      "description": "Queue plans and tech debt into the cw task queue, then claim, execute, and review them across sessions.",
+      "version": "1.0.0",
+      "category": "workflow",
+      "keywords": ["cw", "queue", "orchestration", "multi-session"],
+      "license": "Unlicense"
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+---
+name: queue-plan
+description: Use when an approved plan file is ready for implementation but not in the current session - queues it onto the cw task queue so a future session can claim and execute it via pull-and-execute. Validates the plan path and writes a queue entry referencing the plan.
+---
+
 # Queue Plan for Implementation
 
 Queue an approved plan to the task queue so it can be picked up by `/pull-and-execute`.

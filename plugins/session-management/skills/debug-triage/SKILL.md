@@ -1,3 +1,8 @@
+---
+name: debug-triage
+description: Use when starting a debugging session that is likely to be multi-issue or long-running, or when an existing debug effort is becoming chaotic. Tracks each issue with status (investigating/fixed/deferred/escalated), supports agent escalation when stuck, and generates a postmortem in .debug/ at session end.
+---
+
 # Debug Triage
 
 Structured debugging with issue tracking, agent escalation, and postmortem generation. Transforms chaotic debugging into a methodical process.
@@ -20,7 +25,7 @@ When `/debug-start` is invoked:
 4. Display the session file path to the user
 5. Begin tracking issues as they arise
 
-Use the template from `templates/debug-triage/session-log.md` in the claude-skills directory.
+Use the template bundled with this skill at `templates/session-log.md` (next to this `SKILL.md`).
 
 ## Issue Tracking
 
@@ -113,7 +118,7 @@ When the user ends the debug session or invokes `/debug-end`:
 
 1. Update session file frontmatter: `status: completed`, add `ended` timestamp
 2. Generate postmortem at `.debug/postmortem-YYYY-MM-DD-HHMM.md`
-3. Use the template from `templates/debug-triage/postmortem.md`
+3. Use the template at `templates/postmortem.md` (bundled with this skill)
 4. Fill in all counts and summaries from the session
 5. Display the postmortem path and a brief summary to the user
 

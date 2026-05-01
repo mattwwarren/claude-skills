@@ -1,3 +1,8 @@
+---
+name: session-done
+description: Use to wrap up a normal Claude Code work session at a clean stopping point. Gathers session context from git and todos, writes a self-contained handoff document to .handoffs/, and signals completion to the cw orchestrator via `cw done`. Use this for normal endings - prefer the handoff skill for context-exhaustion or stuck-debug scenarios.
+---
+
 # Wrap Up Work Session
 
 End your work session by generating a handoff document and signaling completion to the `cw` orchestrator.

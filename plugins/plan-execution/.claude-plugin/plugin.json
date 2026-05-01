@@ -1,0 +1,13 @@
+{
+  "name": "plan-execution",
+  "version": "1.0.0",
+  "description": "Phase-by-phase plan execution with parallel sub-agents, working from markdown plans with checkbox tasks.",
+  "author": {
+    "name": "Matt Warren",
+    "url": "https://github.com/mattwwarren"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["plan", "executor", "phases", "agents"]
+}

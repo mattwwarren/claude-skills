@@ -1,3 +1,8 @@
+---
+name: handoff
+description: Use when a Claude Code session ends abnormally - context window is 80%+ full, two or more debug attempts have failed (debug fork), or task scope expanded beyond the original intent. Generates self-contained handoff documents in .handoffs/ so the next session resumes cleanly with zero context loss.
+---
+
 # Session Handoff
 
 Generate structured handoff documents for abnormal session endings so work resumes cleanly.
@@ -94,7 +99,7 @@ Use current UTC time for the timestamp.
 
 ## Templates
 
-Use the templates in `templates/handoff/` from the claude-skills directory:
+Use the templates bundled with this skill (`templates/` next to this `SKILL.md`):
 
 | Template | Use For |
 |----------|---------|

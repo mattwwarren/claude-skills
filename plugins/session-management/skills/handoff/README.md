@@ -44,13 +44,20 @@ Generates a handoff focused on the original must-do items, with expanded scope i
 
 ## Installation
 
-Append the skill's system prompt to your project's CLAUDE.md:
+Install via the `claude-skills` marketplace:
+
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install session-management@claude-skills
+```
+
+For users still piping into a project `CLAUDE.md`, the legacy helper still works:
 
 ```bash
 ./install.sh handoff >> ./CLAUDE.md
 ```
 
-Or copy the contents of `skills/handoff/SKILL.md` into your CLAUDE.md manually.
+Or copy the contents of this directory's `SKILL.md` into your CLAUDE.md manually.
 
 ## Integration with Plans
 
@@ -63,7 +70,7 @@ The handoff skill works with plan-based workflows:
 
 ## Templates
 
-Templates live in `templates/handoff/`. Each is a fill-in-the-blanks markdown file:
+Templates live in `templates/` next to `SKILL.md`. Each is a fill-in-the-blanks markdown file:
 
 | Template | When Used |
 |----------|-----------|

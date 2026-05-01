@@ -1,0 +1,13 @@
+{
+  "name": "session-management",
+  "version": "1.0.0",
+  "description": "Structured session handoffs, session-done wrap-ups, and debug triage with issue tracking and escalation.",
+  "author": {
+    "name": "Matt Warren",
+    "url": "https://github.com/mattwwarren"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["handoff", "session", "debug", "triage", "context"]
+}

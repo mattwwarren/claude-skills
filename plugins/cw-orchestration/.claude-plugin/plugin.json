@@ -1,0 +1,13 @@
+{
+  "name": "cw-orchestration",
+  "version": "1.0.0",
+  "description": "Queue plans and tech debt into the cw task queue, then claim, execute, and review them across sessions.",
+  "author": {
+    "name": "Matt Warren",
+    "url": "https://github.com/mattwwarren"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["cw", "queue", "orchestration", "multi-session"]
+}
