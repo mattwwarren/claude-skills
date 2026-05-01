@@ -51,6 +51,9 @@ This is the workhorse skill for multi-session orchestration. It implements a 6-p
 
 ## Installation
 
-```bash
-./install.sh pull-and-execute >> ./CLAUDE.md
+Install via the `claude-skills` marketplace:
+
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install cw-orchestration@claude-skills
 ```

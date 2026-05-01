@@ -37,6 +37,9 @@ When you're done working, this skill captures what was accomplished and what's r
 
 ## Installation
 
-```bash
-./install.sh session-done >> ./CLAUDE.md
+Install via the `claude-skills` marketplace:
+
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install session-management@claude-skills
 ```

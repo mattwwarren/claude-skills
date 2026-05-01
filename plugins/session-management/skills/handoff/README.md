@@ -51,14 +51,6 @@ Install via the `claude-skills` marketplace:
 /plugin install session-management@claude-skills
 ```
 
-For users still piping into a project `CLAUDE.md`, the legacy helper still works:
-
-```bash
-./install.sh handoff >> ./CLAUDE.md
-```
-
-Or copy the contents of this directory's `SKILL.md` into your CLAUDE.md manually.
-
 ## Integration with Plans
 
 The handoff skill works with plan-based workflows:

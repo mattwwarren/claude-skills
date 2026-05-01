@@ -85,8 +85,7 @@ Each skill works independently, but they're most effective together.
 │       └── skills/{queue-plan,queue-debt,pull-and-execute}/
 ├── CONCEPTS.md
 ├── LICENSE
-├── README.md
-└── install.sh                        # Legacy: print SKILL.md to stdout
+└── README.md
 ```
 
 Each `SKILL.md` starts with YAML frontmatter:
@@ -108,19 +107,6 @@ git clone https://github.com/mattwwarren/claude-skills.git
 /plugin marketplace add ./claude-skills
 /plugin install session-management@claude-skills
 ```
-
-## Legacy `install.sh`
-
-For users who still want to paste skill bodies into a `CLAUDE.md`:
-
-```bash
-./install.sh --list                           # List skills across all plugins
-./install.sh handoff                          # Print one skill to stdout
-./install.sh handoff >> ./CLAUDE.md           # Append to a project CLAUDE.md
-./install.sh --all >> ./CLAUDE.md             # Print every skill
-```
-
-Prefer the marketplace install path - skills load only when relevant, keeping the project's `CLAUDE.md` focused on project-specific guidance.
 
 ## Philosophy
 

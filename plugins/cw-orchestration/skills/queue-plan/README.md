@@ -35,6 +35,9 @@ When you have a plan ready for implementation, this skill queues it to the `cw` 
 
 ## Installation
 
-```bash
-./install.sh queue-plan >> ./CLAUDE.md
+Install via the `claude-skills` marketplace:
+
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install cw-orchestration@claude-skills
 ```

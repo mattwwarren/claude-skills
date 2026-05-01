@@ -56,11 +56,12 @@ Produces `.debug/postmortem-YYYY-MM-DD-HHMM.md` with:
 
 ## Installation
 
-```bash
-./install.sh debug-triage >> ./CLAUDE.md
-```
+Install via the `claude-skills` marketplace:
 
-This appends the debug-triage instructions to your project's CLAUDE.md so Claude Code follows the structured debugging process.
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install session-management@claude-skills
+```
 
 ## Example Session
 

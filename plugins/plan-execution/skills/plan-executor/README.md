@@ -64,12 +64,12 @@ Phases execute sequentially. Phase 2 does not start until all Phase 1 tasks pass
 
 ## Installation
 
-```bash
-cd claude-skills
-./install.sh plan-executor >> /path/to/project/CLAUDE.md
-```
+Install via the `claude-skills` marketplace:
 
-This appends the skill instructions to your project's CLAUDE.md so Claude Code knows how to execute plans.
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install plan-execution@claude-skills
+```
 
 ## Example Workflow
 

@@ -39,6 +39,9 @@ During feature work, you often discover tech debt that shouldn't be addressed im
 
 ## Installation
 
-```bash
-./install.sh queue-debt >> ./CLAUDE.md
+Install via the `claude-skills` marketplace:
+
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install cw-orchestration@claude-skills
 ```
