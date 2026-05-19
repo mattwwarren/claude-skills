@@ -1,0 +1,14 @@
+{
+  "name": "session-management",
+  "description": "Handoff generation, session wrap-up, and structured debug triage for Claude Code work sessions",
+  "version": "1.0.0",
+  "author": {
+    "name": "Matthew Warren",
+    "email": "matt@warrencomputing.net"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["handoff", "session", "debug", "triage", "workflow"],
+  "skills": "./skills/"
+}

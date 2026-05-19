@@ -1,0 +1,55 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-skills",
+  "description": "Reusable Claude Code skills for session management, plan execution, queue orchestration, and code review pipelines",
+  "owner": {
+    "name": "Matthew Warren",
+    "email": "matt@warrencomputing.net"
+  },
+  "plugins": [
+    {
+      "name": "session-management",
+      "description": "Handoff generation, session wrap-up, and structured debug triage. Use when sessions end abnormally (context exhaustion, debug fork, scope creep) or when wrapping up work cleanly.",
+      "author": {
+        "name": "Matthew Warren",
+        "email": "matt@warrencomputing.net"
+      },
+      "category": "workflow",
+      "source": "./plugins/session-management",
+      "homepage": "https://github.com/mattwwarren/claude-skills/tree/main/plugins/session-management"
+    },
+    {
+      "name": "plan-execution",
+      "description": "Phase-by-phase execution of approved markdown plans with parallel sub-agent dispatch and per-phase handoffs.",
+      "author": {
+        "name": "Matthew Warren",
+        "email": "matt@warrencomputing.net"
+      },
+      "category": "workflow",
+      "source": "./plugins/plan-execution",
+      "homepage": "https://github.com/mattwwarren/claude-skills/tree/main/plugins/plan-execution"
+    },
+    {
+      "name": "queue-orchestration",
+      "description": "Skills for the cw CLI multi-session work queue: enqueue plans and tech-debt items, then claim and execute them with agent teams.",
+      "author": {
+        "name": "Matthew Warren",
+        "email": "matt@warrencomputing.net"
+      },
+      "category": "workflow",
+      "source": "./plugins/queue-orchestration",
+      "homepage": "https://github.com/mattwwarren/claude-skills/tree/main/plugins/queue-orchestration"
+    },
+    {
+      "name": "review-pipeline",
+      "description": "Full code review pipeline: parallel specialized reviewer agents, the Linear-to-ship auto-dev flow, and PR review monitoring. Bundles 14 reviewer agents, commands, and posting scripts.",
+      "author": {
+        "name": "Matthew Warren",
+        "email": "matt@warrencomputing.net"
+      },
+      "category": "development",
+      "source": "./plugins/review-pipeline",
+      "homepage": "https://github.com/mattwwarren/claude-skills/tree/main/plugins/review-pipeline"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "plan-execution",
+  "description": "Phase-by-phase execution of approved markdown plans with parallel sub-agent dispatch",
+  "version": "1.0.0",
+  "author": {
+    "name": "Matthew Warren",
+    "email": "matt@warrencomputing.net"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["plan", "execution", "agents", "workflow"],
+  "skills": "./skills/"
+}

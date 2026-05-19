@@ -1,0 +1,14 @@
+{
+  "name": "queue-orchestration",
+  "description": "Skills for the cw CLI multi-session work queue: queue plans and tech debt, claim and execute with agent teams",
+  "version": "1.0.0",
+  "author": {
+    "name": "Matthew Warren",
+    "email": "matt@warrencomputing.net"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["queue", "orchestration", "cw", "workflow"],
+  "skills": "./skills/"
+}

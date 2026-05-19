@@ -1,136 +1,110 @@
 # claude-skills
 
-Reusable skills for the [Claude Code](https://docs.anthropic.com/en/docs/claude-code) AI assistant. Each skill is a system prompt snippet you paste into your project's `CLAUDE.md` to teach Claude structured workflows.
+A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) **plugin marketplace** for session management, plan execution, queue orchestration, and code-review pipelines. Each plugin ships skills (system-prompt snippets), agents (specialist sub-agents), commands (slash commands), and supporting scripts.
 
-No dependencies. No scripts. Just instructional markdown.
+## Install
 
-## Available Skills
+```text
+/plugin marketplace add mattwwarren/claude-skills
+/plugin install <plugin-name>@claude-skills
+```
 
-### Session Management
+## Plugins
 
-| Skill | What It Does |
-|-------|-------------|
-| [session-done](skills/session-done/) | Wrap up work sessions with handoff generation and `cw done` signal |
-| [handoff](skills/handoff/) | Structured session handoffs for context exhaustion, debug forks, and scope creep |
-| [debug-triage](skills/debug-triage/) | Structured debugging with issue tracking, escalation, and postmortems |
-
-### Plan Execution
+### [session-management](plugins/session-management/)
 
 | Skill | What It Does |
-|-------|-------------|
-| [plan-executor](skills/plan-executor/) | Phase-by-phase plan execution with parallel sub-agents |
+|-------|--------------|
+| [handoff](plugins/session-management/skills/handoff/) | Structured session handoffs for context exhaustion, debug forks, scope creep |
+| [session-done](plugins/session-management/skills/session-done/) | Normal session wrap-up + `cw done` signal |
+| [debug-triage](plugins/session-management/skills/debug-triage/) | Structured debugging with issue tracking, escalation, postmortems |
 
-### Multi-Session Orchestration (cw CLI)
-
-| Skill | What It Does |
-|-------|-------------|
-| [queue-plan](skills/queue-plan/) | Queue approved plans for implementation via the `cw` task queue |
-| [queue-debt](skills/queue-debt/) | Queue tech debt items with optional priority |
-| [pull-and-execute](skills/pull-and-execute/) | Claim queue items, spawn agent teams, review, and complete |
-
-### Code Review & Development
+### [plan-execution](plugins/plan-execution/)
 
 | Skill | What It Does |
-|-------|-------------|
-| [review](skills/review/) | Parallel code review using specialized reviewer agents — only actionable findings surface |
-| [auto-dev](skills/auto-dev/) | Linear → plan → implement → review → ship pipeline with scope-based automation |
-| [review-monitor](skills/review-monitor/) | Follow PRs from first review through merge — delta reviews, approvals, nudges |
+|-------|--------------|
+| [plan-executor](plugins/plan-execution/skills/plan-executor/) | Phase-by-phase plan execution with parallel sub-agents |
 
-The `review`/`auto-dev`/`review-monitor` skills are the instructional cores. For the complete pipeline (14 reviewer agent definitions, GitHub posting scripts, the review-monitor state machine), pair them with [global-claude/exports/review-pipeline](https://github.com/mattwwarren/global-claude/tree/main/exports/review-pipeline).
+### [queue-orchestration](plugins/queue-orchestration/)
 
-## Quick Start
+For the `cw` CLI multi-session work queue.
+
+| Skill | What It Does |
+|-------|--------------|
+| [queue-plan](plugins/queue-orchestration/skills/queue-plan/) | Queue approved plans for implementation |
+| [queue-debt](plugins/queue-orchestration/skills/queue-debt/) | Queue tech-debt items with priority |
+| [pull-and-execute](plugins/queue-orchestration/skills/pull-and-execute/) | Claim queue items, spawn agent teams, review, complete |
+
+### [review-pipeline](plugins/review-pipeline/)
+
+Parallel-agent code review, end-to-end auto-dev, PR follow-through. Bundles **14 reviewer agent definitions**, **8 commands**, and **6 Python scripts** for GitHub posting and review-monitor state.
+
+| Skill | What It Does |
+|-------|--------------|
+| [review](plugins/review-pipeline/skills/review/) | Parallel code review using specialized reviewer agents |
+| [auto-dev](plugins/review-pipeline/skills/auto-dev/) | Linear → plan → implement → review → ship pipeline |
+| [review-monitor](plugins/review-pipeline/skills/review-monitor/) | Follow PRs from first review through merge |
+
+## Marketplace Layout
+
+```
+claude-skills/
+├── .claude-plugin/
+│   └── marketplace.json          # marketplace manifest (4 plugins)
+├── plugins/
+│   ├── session-management/
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/{handoff,session-done,debug-triage}/
+│   ├── plan-execution/
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/plan-executor/
+│   ├── queue-orchestration/
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/{queue-plan,queue-debt,pull-and-execute}/
+│   └── review-pipeline/
+│       ├── .claude-plugin/plugin.json
+│       ├── skills/{review,auto-dev,review-monitor}/
+│       ├── agents/   (14 reviewer agents)
+│       ├── commands/ (auto-debt, auto-dev, post-review, prep-pr, review,
+│       │             review-monitor, review-sweep, ship-it)
+│       └── scripts/  (post_review.py, review_monitor.py, etc.)
+└── install.sh        # legacy snippet-mode (prints SKILL.md to stdout)
+```
+
+Each `SKILL.md` carries YAML frontmatter (`name`, `description`) so Claude Code's `Skill` tool can discover it; scripts referenced by commands use `${CLAUDE_PLUGIN_ROOT}/scripts/...` paths that resolve to the plugin's install location.
+
+## Legacy: Paste-Into-CLAUDE.md Mode
+
+The original markdown-snippet workflow still works for users who want to drop a skill into a project's `CLAUDE.md` without installing the plugin:
 
 ```bash
-# 1. Clone (or add as submodule)
 git clone https://github.com/mattwwarren/claude-skills.git
-
-# 2. Install a skill
 ./claude-skills/install.sh handoff >> ./CLAUDE.md
-
-# 3. Use it
-# Claude now knows how to generate structured handoffs
+./claude-skills/install.sh --list                # see what's available
+./claude-skills/install.sh --all >> ./CLAUDE.md  # everything
 ```
 
-## Installation
+The installer auto-discovers skills inside `plugins/*/skills/*/SKILL.md`.
 
-### Option A: Git Submodule (recommended for repos)
-
-```bash
-git submodule add https://github.com/mattwwarren/claude-skills.git
-./claude-skills/install.sh handoff >> ./CLAUDE.md
-```
-
-### Option B: Standalone Clone
-
-```bash
-git clone https://github.com/mattwwarren/claude-skills.git
-./claude-skills/install.sh --all >> ./CLAUDE.md
-```
-
-### Option C: Copy-Paste
-
-Open any `skills/<name>/SKILL.md` and paste its contents into your `CLAUDE.md`.
-
-## install.sh
-
-```bash
-./install.sh handoff              # Print one skill to stdout
-./install.sh queue-plan           # Print another
-./install.sh --list               # Show available skills
-./install.sh --all                # Print all skills
-./install.sh handoff >> CLAUDE.md # Append to your config
-```
-
-## Skill Format
-
-Each skill follows this structure:
-
-```
-skills/<name>/
-├── README.md    # User documentation, examples, installation guide
-└── SKILL.md     # System prompt snippet (this is what gets installed)
-
-templates/<name>/
-├── README.md    # Template usage guide
-└── *.md         # Fill-in-the-blank templates for skill outputs
-```
-
-- **SKILL.md** is the system prompt snippet - instructional text that teaches Claude the behavior
-- **README.md** is for humans - explains what the skill does and how to use it
-- **templates/** are reference templates for the documents each skill generates
-
-## How Skills Work Together
-
-These skills are designed as a system:
+## How the Skills Fit Together
 
 1. **plan-executor** breaks large tasks into phases and executes them with sub-agents
-2. Between phases (or when context runs low), **handoff** generates structured handoff documents
+2. When context runs low or debugging stalls, **handoff** generates structured handoff docs
 3. **session-done** wraps up normal sessions and signals `cw done`
-4. When debugging gets stuck, **debug-triage** tracks issues and can escalate to background agents
-5. Debug triage's "debug fork" pattern produces handoffs via the **handoff** skill
-6. **queue-plan** and **queue-debt** feed work into the `cw` task queue
-7. **pull-and-execute** claims and executes queued items across sessions
-
-Each skill works independently, but they're most effective together.
+4. **debug-triage** tracks stuck issues and can escalate to background agents
+5. **queue-plan** / **queue-debt** push work into the `cw` task queue
+6. **pull-and-execute** claims and executes queued items across sessions
+7. **review** runs the parallel reviewer agents; **auto-dev** strings the full Linear-to-ship pipeline together; **review-monitor** shepherds PRs through merge
 
 ## Philosophy
 
-See [CONCEPTS.md](CONCEPTS.md) for the ideas behind these skills:
+See [CONCEPTS.md](CONCEPTS.md):
 
 - Fresh-context principle (handoffs must be self-contained)
 - Debug forking (split stuck work into main + investigation tracks)
 - Session boundaries (work with finite context, not against it)
 - Agent orchestration (parallelize independent work)
 
-## Contributing
-
-To add a new skill:
-
-1. Create `skills/<name>/SKILL.md` with the system prompt snippet
-2. Create `skills/<name>/README.md` with documentation
-3. Optionally add `templates/<name>/` for output templates
-4. The skill automatically appears in `./install.sh --list`
-
 ## License
 
-[Unlicense](LICENSE) - public domain.
+[Unlicense](LICENSE) — public domain.

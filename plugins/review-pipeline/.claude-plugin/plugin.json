@@ -1,0 +1,16 @@
+{
+  "name": "review-pipeline",
+  "description": "Full code review pipeline: parallel specialized reviewer agents, Linear-to-ship auto-dev flow, PR review monitoring",
+  "version": "1.0.0",
+  "author": {
+    "name": "Matthew Warren",
+    "email": "matt@warrencomputing.net"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["code-review", "agents", "ci", "pr", "automation"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "commands": "./commands/"
+}
