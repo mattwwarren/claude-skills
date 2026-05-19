@@ -28,6 +28,16 @@ No dependencies. No scripts. Just instructional markdown.
 | [queue-debt](skills/queue-debt/) | Queue tech debt items with optional priority |
 | [pull-and-execute](skills/pull-and-execute/) | Claim queue items, spawn agent teams, review, and complete |
 
+### Code Review & Development
+
+| Skill | What It Does |
+|-------|-------------|
+| [review](skills/review/) | Parallel code review using specialized reviewer agents — only actionable findings surface |
+| [auto-dev](skills/auto-dev/) | Linear → plan → implement → review → ship pipeline with scope-based automation |
+| [review-monitor](skills/review-monitor/) | Follow PRs from first review through merge — delta reviews, approvals, nudges |
+
+The `review`/`auto-dev`/`review-monitor` skills are the instructional cores. For the complete pipeline (14 reviewer agent definitions, GitHub posting scripts, the review-monitor state machine), pair them with [global-claude/exports/review-pipeline](https://github.com/mattwwarren/global-claude/tree/main/exports/review-pipeline).
+
 ## Quick Start
 
 ```bash

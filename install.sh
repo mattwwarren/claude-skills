@@ -18,6 +18,9 @@ Skills:
   queue-plan         Queue approved plans for implementation (cw CLI)
   queue-debt         Queue tech debt items with priority (cw CLI)
   pull-and-execute   Claim queue items, spawn agents, review, complete
+  review             Parallel code review using specialized reviewer agents
+  auto-dev           Linear → plan → implement → review → ship pipeline
+  review-monitor     Follow PRs from first review through merge
 
 Options:
   --list           List available skills
