@@ -1,0 +1,14 @@
+{
+  "name": "knowledge-base",
+  "description": "Mid-session lesson capture and knowledge-base inbox management for Claude Code. Inspired by Scott Cipriano (@scottpcipriano).",
+  "version": "1.0.0",
+  "author": {
+    "name": "Matthew Warren",
+    "email": "matt@warrencomputing.net"
+  },
+  "homepage": "https://github.com/mattwwarren/claude-skills",
+  "repository": "https://github.com/mattwwarren/claude-skills",
+  "license": "Unlicense",
+  "keywords": ["knowledge-base", "wiki", "lessons", "inbox", "learning"],
+  "skills": "./skills/"
+}

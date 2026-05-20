@@ -50,6 +50,17 @@
       "category": "development",
       "source": "./plugins/review-pipeline",
       "homepage": "https://github.com/mattwwarren/claude-skills/tree/main/plugins/review-pipeline"
+    },
+    {
+      "name": "knowledge-base",
+      "description": "Mid-session lesson capture and knowledge-base inbox management. Inspired by Scott Cipriano (@scottpcipriano).",
+      "author": {
+        "name": "Matthew Warren",
+        "email": "matt@warrencomputing.net"
+      },
+      "category": "workflow",
+      "source": "./plugins/knowledge-base",
+      "homepage": "https://github.com/mattwwarren/claude-skills/tree/main/plugins/knowledge-base"
     }
   ]
 }
