@@ -1,6 +1,6 @@
 # claude-skills
 
-A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) **plugin marketplace** for session management, plan execution, queue orchestration, and code-review pipelines. Each plugin ships skills (system-prompt snippets), agents (specialist sub-agents), commands (slash commands), and supporting scripts.
+A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) **plugin marketplace** for session management, plan execution, queue orchestration, code-review pipelines, and knowledge-base lesson capture. Each plugin ships skills (system-prompt snippets), agents (specialist sub-agents), commands (slash commands), and supporting scripts.
 
 ## Install
 
@@ -45,12 +45,20 @@ Parallel-agent code review, end-to-end auto-dev, PR follow-through. Bundles **14
 | [auto-dev](plugins/review-pipeline/skills/auto-dev/) | Linear → plan → implement → review → ship pipeline |
 | [review-monitor](plugins/review-pipeline/skills/review-monitor/) | Follow PRs from first review through merge |
 
+### [knowledge-base](plugins/knowledge-base/)
+
+> Wiki system design inspired by Scott Cipriano (@scottpcipriano).
+
+| Skill | What It Does |
+|-------|--------------|
+| [wiki-lesson](plugins/knowledge-base/skills/wiki-lesson/) | Silent mid-session lesson capture to a configurable inbox |
+
 ## Marketplace Layout
 
 ```
 claude-skills/
 ├── .claude-plugin/
-│   └── marketplace.json          # marketplace manifest (4 plugins)
+│   └── marketplace.json          # marketplace manifest (5 plugins)
 ├── plugins/
 │   ├── session-management/
 │   │   ├── .claude-plugin/plugin.json
@@ -61,13 +69,16 @@ claude-skills/
 │   ├── queue-orchestration/
 │   │   ├── .claude-plugin/plugin.json
 │   │   └── skills/{queue-plan,queue-debt,pull-and-execute}/
-│   └── review-pipeline/
+│   ├── review-pipeline/
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── skills/{review,auto-dev,review-monitor}/
+│   │   ├── agents/   (14 reviewer agents)
+│   │   ├── commands/ (auto-debt, auto-dev, post-review, prep-pr, review,
+│   │   │             review-monitor, review-sweep, ship-it)
+│   │   └── scripts/  (post_review.py, review_monitor.py, etc.)
+│   └── knowledge-base/
 │       ├── .claude-plugin/plugin.json
-│       ├── skills/{review,auto-dev,review-monitor}/
-│       ├── agents/   (14 reviewer agents)
-│       ├── commands/ (auto-debt, auto-dev, post-review, prep-pr, review,
-│       │             review-monitor, review-sweep, ship-it)
-│       └── scripts/  (post_review.py, review_monitor.py, etc.)
+│       └── skills/wiki-lesson/
 └── install.sh        # legacy snippet-mode (prints SKILL.md to stdout)
 ```
 
