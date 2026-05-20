@@ -40,13 +40,7 @@ Reads from transcript files (`.jsonl`) are fine regardless of location — reads
 
 Scripts are bundled at `${CLAUDE_PLUGIN_ROOT}/scripts/` when installed via the plugin marketplace. When running from a repo checkout, use repo-relative paths: `plugins/knowledge-base/scripts/`.
 
-```bash
-# Installed path
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/processed_tracker.py  # Not a CLI tool — use Python
-
-# Repo-checkout fallback
-python3 plugins/knowledge-base/scripts/processed_tracker.py
-```
+No CLI exists for `processed_tracker.py` — import it from Python (see Step 7). Its bundled location is `${CLAUDE_PLUGIN_ROOT}/scripts/processed_tracker.py` when installed, or `plugins/knowledge-base/scripts/processed_tracker.py` when running from a repo checkout.
 
 Scan: `${WIKI_TRANSCRIPT_PATH}` (default: `~/.claude/projects/*/`) for `*.jsonl` files.
 
@@ -146,7 +140,7 @@ Generic content: append to `wiki/local/log.md` AND (optionally) a brief line in 
 
 ```markdown
 ## [YYYY-MM-DD] ingest | <brief description>
-New inbox files: wiki/inbox/ingest-<name>.md
+New inbox files: ${WIKI_TRACKED_INBOX_PATH}ingest-<name>.md  # or ${WIKI_INBOX_PATH} per routing rule above
 ```
 
 Write `heartbeat` entry even if nothing processed:
@@ -166,7 +160,7 @@ When `transcript_reader.py` reports output >80K chars:
 
 Scan all project directories under `${WIKI_TRANSCRIPT_PATH}` (default: `~/.claude/projects/*/`).
 
-Learnings from repo X go to `${WIKI_TRACKED_INBOX_PATH}` with frontmatter `repo: X` — wiki-lint routes them to the appropriate wiki section. All knowledge lives in the single wiki tree under the project root.
+Apply the **same routing rule as Step 6** regardless of which repo the learning came from: client/employer/internal-repo/PHI context → `${WIKI_INBOX_PATH}` (local, gitignored); generic tooling/CLI/Claude-Code-infra content → `${WIKI_TRACKED_INBOX_PATH}` (tracked). Tag the frontmatter with `repo: X` to retain provenance, but the inbox destination is determined by content classification, not source repo.
 
 ## Batch mode
 

@@ -37,7 +37,7 @@ Process session transcripts (or any source file) into the wiki inbox — in bulk
 ## Example
 
 Running the transcript reader + secret filter against a recent session transcript
-(`python3 scripts/transcript_reader.py <transcript> | python3 scripts/secret_filter.py`):
+(`python3 plugins/knowledge-base/scripts/transcript_reader.py <transcript> | python3 plugins/knowledge-base/scripts/secret_filter.py`):
 
 ```
 [transcript_reader] Output: 104,000 chars from <session-id>.jsonl
