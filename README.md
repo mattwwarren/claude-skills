@@ -105,6 +105,18 @@ See [CONCEPTS.md](CONCEPTS.md):
 - Session boundaries (work with finite context, not against it)
 - Agent orchestration (parallelize independent work)
 
+## Versioning
+
+This marketplace and each plugin follow [Semantic Versioning](https://semver.org/). Marketplace-wide changes are summarized in [CHANGELOG.md](CHANGELOG.md); per-plugin versions live in each plugin's `.claude-plugin/plugin.json`.
+
+Significant structural decisions are recorded as [Architecture Decision Records](docs/adr/) — start with [ADR-0001](docs/adr/0001-plugin-marketplace-structure.md) to understand why the marketplace is laid out the way it is.
+
+## Sync model
+
+This public marketplace mirrors an internal repo (`global-claude`) that the author uses day-to-day. Examples in the public version use generic placeholders (`your-org/your-repo`, `#your-review-channel`, `<your-channel-id>`) so client and employer context never leaks. The author does not personally install from this public marketplace; keeping it in sync is structural maintenance, not dogfood.
+
+If you find a script path, identifier, or example that still looks employer-specific, please open an issue.
+
 ## License
 
 [Unlicense](LICENSE) — public domain.
