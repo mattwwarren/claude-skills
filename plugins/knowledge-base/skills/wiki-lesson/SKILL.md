@@ -45,8 +45,8 @@ Write a lesson when ANY of these apply:
 2. **Determine the topic** — 3-6 word kebab-case description for the filename.
 
 3. **Write to inbox** — Routing:
-   - Client/employer/internal-repo/PHI context → `${WIKI_INBOX_PATH}/lesson-<description>-<YYYY-MM-DD>.md   (default: wiki/local/inbox/)` (gitignored, default for most lessons in this environment)
-   - Generic tooling/CLI/Claude-Code-infra only → `${WIKI_TRACKED_INBOX_PATH}/lesson-<description>-<YYYY-MM-DD>.md   (default: wiki/inbox/)` (tracked)
+   - Client/employer/internal-repo/PHI context → `${WIKI_INBOX_PATH}/lesson-<description>-<YYYY-MM-DD>.md` (gitignored; default: `wiki/local/inbox/`)
+   - Generic tooling/CLI/Claude-Code-infra only → `${WIKI_TRACKED_INBOX_PATH}/lesson-<description>-<YYYY-MM-DD>.md` (tracked; default: `wiki/inbox/`)
    - When in doubt, file local.
 
 ```markdown
@@ -65,10 +65,10 @@ topic: <topic-hint>
    - Local lesson (default): no tracked index update. Entry will be added to `wiki/local/` pages by `/wiki-lint`.
    - Generic lesson: add under `## Generic lessons` in `wiki/index.md (relative to project root)`.
 
-5. **Append to log** — `wiki/local/log.md (relative to project root)`:
+5. **Append to log** — `wiki/local/log.md` (relative to project root):
 ```
 ## [<YYYY-MM-DD>] lesson | <brief description>
-Added: wiki/inbox/lesson-<description>-<date>.md
+Added: ${WIKI_INBOX_PATH}/lesson-<description>-<date>.md
 ```
 
 ## Getting the session ID

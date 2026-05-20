@@ -39,3 +39,5 @@ Invoked silently — Claude identifies the lesson, writes it, and resumes the ta
 ```text
 /plugin install knowledge-base@claude-skills
 ```
+
+> **Note:** `/wiki-lint` (a separate plugin, not yet published) is required to promote inbox items to wiki pages. Without it, lessons accumulate in the inbox but are never processed.
