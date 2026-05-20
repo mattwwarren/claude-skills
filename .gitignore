@@ -1,7 +1,10 @@
 .handoffs/
 .claude/worktrees/
+<<<<<<< HEAD
 
 # Python caches
 __pycache__/
 *.pyc
 *.pyo
+=======
+>>>>>>> origin/main
