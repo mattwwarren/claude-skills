@@ -3,13 +3,6 @@ name: Code Quality Reviewer
 description: Analyzes code for quality issues, SOLID principles, DRY violations, naming conventions, and complexity
 tools: [Read, Grep, Glob, Bash]
 model: sonnet
-retained_vs: pr-review-toolkit:code-reviewer
-retained_because: |
-  Catches silent-failure bugs that plugin misses (e.g. genhealth/etl#2959
-  _post_status_change returning True on HTTP 200 with AJAX error body —
-  plugin said "Critical: None"). Plugin also inverts signals (dismissing
-  findings that get fixed) and mis-calibrates severity on speculative
-  claims. See .review-comparison/DECISION.md for the full comparison.
 ---
 
 # Code Quality Reviewer Agent

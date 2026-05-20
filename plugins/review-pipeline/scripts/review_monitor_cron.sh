@@ -77,7 +77,7 @@ if [[ $EC -eq 0 ]]; then
   exit 0
 fi
 
-# --- Hermes DM on failure (rate-limited) ---
+# --- Slack DM on failure (rate-limited, via ESCALATE_CMD) ---
 
 NOW=$(date +%s)
 LAST_ERR=$(stat -f %m "$ERR_MARKER" 2>/dev/null || echo 0)

@@ -1026,7 +1026,7 @@ In headless mode, after all pipeline logic completes, emit a sentinel-delimited 
   },
   "plan_source": "linear_existing",
   "branch": "dev/gen-1234-fix-login",
-  "worktree_path": "/home/matthew/.cw/wt/abc/dev-gen-1234-fix-login",
+  "worktree_path": "/path/to/.cw/wt/abc/your-branch-name",
   "fork_point_sha": "abc1234",
   "commits": ["sha1", "sha2"],
   "pr": {

@@ -3,12 +3,6 @@ name: Code Simplifier
 description: Reviews and simplifies code after implementation - removes complexity, duplication, over-engineering
 tools: [Read, Grep, Glob, Edit, Bash]
 model: sonnet
-retained_vs: pr-review-toolkit:code-simplifier, code-simplifier:code-simplifier
-retained_because: |
-  Edges plugin on dead-code detection (genhealth/etl#2901 — flagged the
-  unreferenced _build_migration_sql function; plugin missed). Tied on
-  cross-file DRY duplication catches. Lower FP rate than plugin on stylistic
-  noise. See .review-comparison/DECISION.md.
 ---
 
 # Code Simplifier

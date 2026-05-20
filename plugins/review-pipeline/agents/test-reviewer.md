@@ -3,15 +3,6 @@ name: Test Reviewer
 description: Analyzes test quality, coverage, AAA pattern, test independence, and mocking strategy
 tools: [Read, Grep, Glob, Bash]
 model: sonnet
-retained_vs: pr-review-toolkit:pr-test-analyzer
-retained_because: |
-  Clearest discriminator across all three pairs. On genhealth/etl#2901 the
-  plugin test-analyzer praised _build_migration_sql as "correctly documented
-  intent" in its Positive Observations — author deleted that function as
-  dead code. An inverted signal is worse than a missed one. Custom explicitly
-  flagged it. Custom also catches GenHealth conventions (PHI-shape in mock
-  fixtures, subprocess-idiom vs pytest-docker migration, coverage thresholds)
-  that plugin under-weights. See .review-comparison/DECISION.md.
 ---
 
 # Test Reviewer Agent

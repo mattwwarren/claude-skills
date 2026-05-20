@@ -1,4 +1,4 @@
-#!/Users/matthew/.local/bin/python3.11
+#!/usr/bin/env python3
 """
 Review monitor: track PR review threads and nudge authors/reviewers.
 
@@ -52,7 +52,7 @@ STALE_REVIEW_THRESHOLD_MIN = 240  # 4 business hours
 CHANNEL_BUMP_COOLDOWN = timedelta(hours=24)
 AUTO_FIX_DAILY_CAP = 2
 
-# Minimum wall-clock time between Hermes DM escalations for the same PR.
+# Minimum wall-clock time between Slack DM escalations for the same PR.
 # Without this, _dm_escalation_reason returns "week_old"/"loop" on every cycle
 # and the skill fires a DM each time. 4h matches the user-requested cadence.
 DM_ESCALATION_COOLDOWN = timedelta(hours=4)
@@ -245,7 +245,7 @@ class MonitoredPR:
     """
 
     last_channel_bump_at: str | None = None
-    """ISO-8601 timestamp of the most recent #product-umpa stale-review bump."""
+    """ISO-8601 timestamp of the most recent stale-review channel-bump post."""
 
     state_entered_at: str | None = None
     """ISO-8601 timestamp when the current attention_state was first observed."""
@@ -1759,7 +1759,7 @@ def _needs_channel_bump(pr: MonitoredPR, attention_state: str | None) -> bool:
 
 
 def _dm_escalation_reason(pr: MonitoredPR, attention_state: str | None) -> str | None:
-    """Return a reason string when /review-monitor should fire a Hermes DM, else None.
+    """Return a reason string when /review-monitor should fire a Slack DM, else None.
 
     Reasons (priority order):
       - "loop"         — auto-fix cap hit today on a still-failing state

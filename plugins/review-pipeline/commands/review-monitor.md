@@ -52,12 +52,12 @@ Pick up any open PRs you authored in the past 7 days that aren't already monitor
 
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/scripts/review_monitor.py discover \
-  --repo genhealth/etl \
-  --repo-path /Users/matthew/workspace/genhealth/etl \
+  --repo your-org/your-repo \
+  --repo-path /path/to/your-repo \
   --days 7
 ```
 
-Returns `{"registered": [...], "skipped": [...], "repo": "..."}`. All etl worktrees roll up to the single `genhealth/etl` repo; the canonical clone path goes in `--repo-path`. The dispatched agent in Step 4 resolves the right worktree from there.
+Returns `{"registered": [...], "skipped": [...], "repo": "..."}`. All worktrees of the same upstream repo roll up to a single repo entry; the canonical clone path goes in `--repo-path`. The dispatched agent in Step 4 resolves the right worktree from there.
 
 ### Step 1: Load Monitored PRs
 
@@ -87,7 +87,7 @@ This returns a JSON array of monitored PRs. Each entry includes:
 | `attention_state` | Author-role only: `merge_blocked` / `ci_failing` / `changes_requested` / `ready_to_approve` / `null`. Drives notification routing. `changes_requested` fires on any of: unresolved inline threads, top-level `reviewDecision == "CHANGES_REQUESTED"`, or a comment-review fallback flagged by the Step 4b' classifier. |
 | `change_request_source` | When `attention_state == "changes_requested"`: `"inline"` (unresolved thread), `"formal"` (`reviewDecision == "CHANGES_REQUESTED"`), or `"comment"` (Step 4b' classifier flagged a `COMMENTED` review as requesting changes). `null` otherwise. Routes the auto-fix prompt. |
 | `pending_comment_reviews` | List of `{review_id, author, submitted_at, body}` for non-bot `COMMENTED` reviews submitted after the latest push / formal review, not yet classified. **Only populated when no higher-priority signal is active** (the fallback gate). The Step 4b' classifier consumes this list. |
-| `needs_local_ping` | `true` when the attention state has changed since the last peon-ping fired |
+| `needs_local_ping` | `true` when the attention state has changed since the last local notification fired |
 | `needs_escalation` | `true` when a Slack-bot DM should be sent this cycle (immediate for ci/merge, 15-min grace for ready_to_approve) |
 | `slack_channel` / `slack_ts` / `slack_last_seen_ts` | Optional — present when the PR was announced to Slack via a ship-it file-drop |
 | `is_draft` / `base_ref_name` | Populated by `check`. Used by `auto_fix_ok` gating — drafts (especially stacked ones) are skipped automatically. |
@@ -303,15 +303,15 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/review_monitor.py record-nudge <pr_number>
 Author-role PRs route by `attention_state` from the `check` result. Three side-effect channels:
 
 - **Auto-fix dispatch:** background `Task` agent (sonnet) fixes the underlying problem and pushes a new commit. Capped at 2 attempts/PR/day (`auto_fix_ok == false` when capped).
-- **Channel bump:** stale `ready_to_approve` PRs accrue business-hour minutes; once ≥ 240 (4 working hours, 8a–6p ET Mon–Fri) they get batched into a single #product-umpa post via Slack MCP.
-- **Hermes DM:** for human-in-the-loop signals only — `dm_escalation_reason` is `"loop"` (cap hit) or `"week_old"` (PR ≥ 7 days old). The user can't self-DM via MCP, so Hermes bot is the route.
+- **Channel bump:** stale `ready_to_approve` PRs accrue business-hour minutes; once ≥ 240 (4 working hours, 8a–6p ET Mon–Fri) they get batched into a single #your-review-channel post via Slack MCP.
+- **Slack DM:** for human-in-the-loop signals only — `dm_escalation_reason` is `"loop"` (cap hit) or `"week_old"` (PR ≥ 7 days old). The user can't self-DM via MCP, so Slack escalation bot is the route.
 
-The local peon-ping is a separate Tier 0 — fires once on every `needs_local_ping == true` to make state changes audible.
+The local notification is a separate Tier 0 — fires once on every `needs_local_ping == true` to make state changes audible.
 
 **Step 4a: Local ping when `needs_local_ping == true`:**
 
 ```bash
-~/workspace/personal/global-claude/hooks/peon-ping/scripts/notify.sh \
+<your-local-notify-script> \
   "PR #<pr_number> (<title>) — <attention_state>" \
   "Review Monitor" \
   red
@@ -463,9 +463,9 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/review_monitor.py record-auto-fix <pr_number> --re
 
 **Step 4c: Channel bump (deferred to batch — see Step 5b).**
 
-When `needs_channel_bump == true`, do nothing here — the batch step at the end of the cycle posts a single #product-umpa message with all pending bumps.
+When `needs_channel_bump == true`, do nothing here — the batch step at the end of the cycle posts a single #your-review-channel message with all pending bumps.
 
-**Step 4d: Hermes DM when `dm_escalation_reason` is set.**
+**Step 4d: Slack DM when `dm_escalation_reason` is set.**
 
 Reason-specific message:
 
@@ -498,7 +498,7 @@ After all per-PR processing, query for any author PRs that have accrued ≥ 4 bu
 ${CLAUDE_PLUGIN_ROOT}/scripts/review_monitor.py pending-channel-bumps
 ```
 
-Returns a list of `{repo, pr_number, business_minutes_in_state, last_channel_bump_at}`. If non-empty, fetch each PR's title + URL and post **a single batched message** to `#product-umpa` (channel ID `C067W2M3N1H`) using the Slack MCP tool `slack_send_message`.
+Returns a list of `{repo, pr_number, business_minutes_in_state, last_channel_bump_at}`. If non-empty, fetch each PR's title + URL and post **a single batched message** to `#your-review-channel` (channel ID `<your-channel-id>`) using the Slack MCP tool `slack_send_message`.
 
 Message format (one PR per bullet, no preamble of who/why):
 
@@ -548,9 +548,9 @@ For each monitored PR where `role == "author"`:
    ```
    Then, only if no reviewers are currently requested (`reviewers` array is empty from step 1):
    ```bash
-   gh pr edit <pr_number> --add-reviewer genhealth/umpa
+   gh pr edit <pr_number> --add-reviewer your-org/your-review-team
    ```
-   The default reviewer is the `genhealth/umpa` team. Don't double-tag if reviewers were already set.
+   The default reviewer is the `your-org/your-review-team` reviewer group. Don't double-tag if reviewers were already set.
 
    Post a confirmation comment:
    ```bash
@@ -564,7 +564,7 @@ For each monitored PR where `role == "author"`:
 
    Rationale: a promoted draft whose parent just merged is almost always DIRTY against `main`. Waiting for the next cron tick to discover DIRTY and dispatch a rebase adds an hour of lag for no benefit — we already know the rebase is needed at promotion time.
 
-   Add a row to the Step 5 summary: `Promoted draft → ready, requested genhealth/umpa, dispatched rebase`.
+   Add a row to the Step 5 summary: `Promoted draft → ready, requested your-org/your-review-team, dispatched rebase`.
 
 This step is idempotent — running on an already-ready PR is a no-op (the `isDraft == false` check at step 1 returns early).
 
@@ -601,7 +601,7 @@ If no actions were taken for a PR (e.g., waiting, `nudge_ok == false`), include 
 
 Runs automatically via launchd at `~/Library/LaunchAgents/com.matthew.review-monitor.plist`, which calls `${CLAUDE_PLUGIN_ROOT}/scripts/review_monitor_cron.sh` on a fixed `StartInterval` of **3600 seconds (hourly)**.
 
-Hourly polling matches the cadence of normal review feedback without generating noise. The prior 30-minute interval was reduced because (a) feedback rarely arrives at sub-hour resolution, (b) tier-1 peon-pings already fire on state changes between cycles, and (c) draft-stack promotion (Step 4e) is not time-critical.
+Hourly polling matches the cadence of normal review feedback without generating noise. The prior 30-minute interval was reduced because (a) feedback rarely arrives at sub-hour resolution, (b) tier-1 local notifications already fire on state changes between cycles, and (c) draft-stack promotion (Step 4e) is not time-critical.
 
 To change the cadence, edit `StartInterval` in the plist and reload:
 
@@ -611,7 +611,7 @@ launchctl load ~/Library/LaunchAgents/com.matthew.review-monitor.plist
 launchctl list | grep review-monitor   # verify
 ```
 
-Logs land in `~/Library/Logs/review-monitor.log`. The plist has no day-of-week or hour-of-day gating — it polls every hour, every day. Weekend / off-hours suppression is handled inside the cycle (peon-ping respects meeting-detect, Slack escalation respects the 15-minute grace timer for `ready_to_approve`).
+Logs land in `~/Library/Logs/review-monitor.log`. The plist has no day-of-week or hour-of-day gating — it polls every hour, every day. Weekend / off-hours suppression is handled inside the cycle (local notifier respects meeting-detect, Slack escalation respects the 15-minute grace timer for `ready_to_approve`).
 
 ---
 
