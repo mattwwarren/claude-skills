@@ -118,10 +118,10 @@ Facts here with inline source tags.
 ### 7. Update processed tracker
 
 ```python
-import sys
-sys.path.insert(0, "${CLAUDE_PLUGIN_ROOT}/scripts")  # or "plugins/knowledge-base/scripts"
+import sys, os
+sys.path.insert(0, os.path.expandvars("${CLAUDE_PLUGIN_ROOT}/scripts"))  # or "plugins/knowledge-base/scripts" from a repo checkout
 from processed_tracker import ProcessedTracker
-tracker = ProcessedTracker(Path(".claude/.processed_wiki_transcripts"))
+tracker = ProcessedTracker(Path(".claude/.processed_wiki_transcripts"))  # project-local, NOT ~/.claude/
 tracker.mark_as_processed(path)  # first time
 tracker.update_size(path)        # after reprocessing a grown transcript
 ```
