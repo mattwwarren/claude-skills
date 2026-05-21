@@ -150,14 +150,16 @@ Lines that look like facts (start with `-`, contain specific claims) but have no
 Scan for obvious duplicate facts across pages (same file path, same error code, same proper noun + claim). Report as `[possible-dup]` candidates for human review.
 
 ### Check 9: Index size
-Count lines in `${WIKI_ROOT}index.md`.
-- 180-199 lines: warn, auto-consolidate if `--full`
-- 200+ lines: error, auto-consolidate
 
-**Auto-consolidation** (when triggered): Replace per-page entries in a directory with a single directory entry: `- [Lessons](lessons/) — N pages (topic1, topic2, ...)`. Individual pages still exist; they're just not listed individually.
+Count lines in `${WIKI_ROOT}index.md` (or `wiki/index.md` if `WIKI_ROOT` is unset).
+
+- 180-199 lines: warn. If running with `--full`, perform consolidation (see below) before Phase 3 rebuilds the index.
+- 200+ lines: `index_builder.py` will raise `IndexTooLargeError` when invoked in Phase 3. Perform consolidation first, then re-run.
+
+**Consolidation** (performed by the skill, not the script): replace per-page entries in a directory with a single directory entry — `- [Lessons](lessons/) — N pages (topic1, topic2, ...)`. Individual pages still exist on disk; they're just not listed individually in the index. The script regenerates the index from the resulting page-list state.
 
 ### Check 10: Log rotation
-If `wiki/local/log.md` >500 lines, move entries older than 90 days to `${WIKI_ROOT}.archive/log-YYYY-MM.md`. Update `wiki/local/log.md` to contain only recent entries.
+If `wiki/local/log.md` >500 lines, move entries older than 90 days to `wiki/local/.archive/log-YYYY-MM.md`. Update `wiki/local/log.md` to contain only recent entries.
 
 ### Check 11: Heartbeat staleness
 Check `wiki/local/log.md` for the most recent `heartbeat` entry. If the last heartbeat is older than the expected refresh window (typically >25 hours), warn: "Ingest pipeline may not be running."
@@ -197,10 +199,11 @@ Issues: X contradictions, Y stale, Z orphans
 Index: N lines
 ```
 
-Always append a heartbeat even if nothing was processed:
+If today's date is not yet present as a heartbeat entry in `wiki/local/log.md`, append one:
 ```markdown
 ## [YYYY-MM-DD] heartbeat | Lint run — nothing to process
 ```
+If today's heartbeat already exists, skip the append. This keeps same-day re-runs as true no-ops (zero writes) while still giving Check 11's staleness detector something to read on the first run of each day.
 
 wiki-lint writes to the same `wiki/local/log.md` as wiki-lesson and wiki-ingest, so heartbeat staleness checks see all producer activity in one place.
 
@@ -209,7 +212,7 @@ wiki-lint writes to the same `wiki/local/log.md` as wiki-lesson and wiki-ingest,
 `${WIKI_ROOT}index.md` is regenerated from disk by `index_builder.py`. Its shape:
 
 - Title line: `# Knowledge Base Index`
-- Two HTML comments declaring the 200-line hard limit and the 180-line consolidation threshold
+- One HTML comment declaring the 200-line hard limit (the index is loaded at session start)
 - Root-level pages first, without a section header: `- [Title](page.md)` per line
 - One `## <Title>` section per subdirectory, alphabetical order, listing each page as `- [Title](<dir>/page.md)`
 - A trailing `## Inbox` section listing inbox files, or `<!-- Empty — wiki-lint is up to date. -->` if empty
@@ -220,9 +223,7 @@ The helper skips `index.md`, `log.md`, the `.archive/` tree, and the `auto-memor
 
 Running `/wiki-lint` twice in a row with no new input is a safe no-op:
 
-The "no diff" guarantee covers wiki page content and `index.md`; `wiki/local/log.md` always grows by exactly one heartbeat line per run (this is the deliberate aliveness signal that Check 11 reads).
-
 1. Tier 1 exact-match dedup short-circuits already-merged content.
 2. Inbox files are deleted only after a successful merge (Phase 1e), so a second run finds an empty inbox.
 3. `index_builder.py` regenerates `index.md` deterministically — identical input produces identical output.
-4. The only intentional second-run write is a fresh `heartbeat` line appended to `wiki/local/log.md`.
+4. The heartbeat in `wiki/local/log.md` is conditional — only the first run of each calendar day writes one, so a same-day re-run produces zero writes.

@@ -70,8 +70,9 @@ def _collect_pages(wiki_dir: Path) -> dict[str, list[PageEntry]]:
     skip_dirs = {_ARCHIVE_DIR, _AUTO_MEMORY_DIR, _INBOX_DIR}
 
     for md_file in sorted(wiki_dir.rglob("*.md")):
-        # Skip top-level special files
-        if md_file.parent == wiki_dir and md_file.name in skip_names:
+        # Skip index and log files at any depth (e.g., wiki/log.md, wiki/local/log.md).
+        # These names are reserved for system files this script manages.
+        if md_file.name in skip_names:
             continue
         # Skip archive and auto-memory trees
         rel = md_file.relative_to(wiki_dir)
@@ -109,7 +110,6 @@ def _render_index(groups: dict[str, list[PageEntry]], inbox: list[PageEntry]) ->
         "# Knowledge Base Index",
         "",
         "<!-- This file is loaded at session start. Keep under 200 lines. -->",
-        "<!-- wiki-lint auto-consolidates directory entries at 180 lines. -->",
         "",
     ]
 

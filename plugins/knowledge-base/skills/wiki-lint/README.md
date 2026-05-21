@@ -6,13 +6,13 @@ Promote inbox items into wiki pages, run quality checks, rebuild the index, and 
 
 ## What It Does
 
-`/wiki-lint` is the curator side of the wiki workflow. Where `/wiki-lesson` and `/wiki-ingest` deposit raw inbox files, wiki-lint promotes those entries into the right wiki pages, dedupes against existing content, flags contradictions, and runs 14 quality checks across the wiki tree. It then regenerates `index.md` from disk and appends a run summary (plus a heartbeat) to `log.md`.
+`/wiki-lint` is the curator side of the wiki workflow. Where `/wiki-lesson` and `/wiki-ingest` deposit raw inbox files, wiki-lint promotes those entries into the right wiki pages, dedupes against existing content, flags contradictions, and runs 14 quality checks across the wiki tree. It then regenerates `index.md` from disk and appends a run summary (plus a heartbeat) to `wiki/local/log.md`.
 
 ## When to Use
 
 - After a batch of `/wiki-lesson` or `/wiki-ingest` runs, to turn raw inbox entries into curated pages
 - Periodic maintenance pass over an established wiki (orphan pages, stale claims, oversized pages, broken cross-links)
-- Before a knowledge handoff, to ensure `index.md` and `log.md` reflect current state
+- Before a knowledge handoff, to ensure `index.md` and `wiki/local/log.md` reflect current state
 - As a scheduled cron job. Expected cadence: once per day, typically 6AM (the default cron-cadence baseline; this is configurable in the companion scheduling plugin — see ADR 0003).
 
 ## Configuration
