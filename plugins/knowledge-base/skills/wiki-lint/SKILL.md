@@ -154,7 +154,7 @@ Scan for obvious duplicate facts across pages (same file path, same error code, 
 Count lines in `${WIKI_ROOT}index.md` (or `wiki/index.md` if `WIKI_ROOT` is unset).
 
 - 180-199 lines: warn. If running with `--full`, perform consolidation (see below) before Phase 3 rebuilds the index.
-- 200+ lines: `index_builder.py` will raise `IndexTooLargeError` when invoked in Phase 3. Perform consolidation first, then re-run.
+- 200 or more lines: `index_builder.py` raises `IndexTooLargeError` when invoked in Phase 3 (the threshold is `>= 200`, not `> 200`). Perform consolidation first, then re-run `/wiki-lint` from the top.
 
 **Consolidation** (performed by the skill, not the script): replace per-page entries in a directory with a single directory entry — `- [Lessons](lessons/) — N pages (topic1, topic2, ...)`. Individual pages still exist on disk; they're just not listed individually in the index. The script regenerates the index from the resulting page-list state.
 
@@ -191,7 +191,12 @@ The helper is stdlib-only and deterministic — running it twice with no other c
 
 ## Phase 4: Log
 
-Append to `wiki/local/log.md`:
+This phase runs regardless of invocation mode (`--full`, `--inbox`, or `--check`). It has two independent steps.
+
+### Step 4a: Lint summary (only when processing happened)
+
+If Phase 1 actually processed at least one inbox file (N > 0), append a summary entry to `wiki/local/log.md`:
+
 ```markdown
 ## [YYYY-MM-DD] lint | Full lint run
 Inbox processed: N files → M pages updated, K new pages
@@ -199,11 +204,17 @@ Issues: X contradictions, Y stale, Z orphans
 Index: N lines
 ```
 
-If today's date is not yet present as a heartbeat entry in `wiki/local/log.md`, append one:
+Skip Step 4a entirely when no inbox files were processed (the heartbeat in Step 4b is the aliveness signal in that case).
+
+### Step 4b: Heartbeat (conditional on today's date)
+
+Scan `wiki/local/log.md` for an existing line matching `## [<today's date>] heartbeat` (the `heartbeat` tag must match — do not match the date alone, because a same-day lint summary line also contains today's date and would cause a false skip). If no such line exists, append:
+
 ```markdown
 ## [YYYY-MM-DD] heartbeat | Lint run — nothing to process
 ```
-If today's heartbeat already exists, skip the append. This keeps same-day re-runs as true no-ops (zero writes) while still giving Check 11's staleness detector something to read on the first run of each day.
+
+If today's heartbeat line is already present, skip the append. This keeps same-day re-runs (with no new inbox input) as true zero-write no-ops while still giving Check 11's staleness detector one liveness signal per day.
 
 wiki-lint writes to the same `wiki/local/log.md` as wiki-lesson and wiki-ingest, so heartbeat staleness checks see all producer activity in one place.
 
@@ -217,7 +228,7 @@ wiki-lint writes to the same `wiki/local/log.md` as wiki-lesson and wiki-ingest,
 - One `## <Title>` section per subdirectory, alphabetical order, listing each page as `- [Title](<dir>/page.md)`
 - A trailing `## Inbox` section listing inbox files, or `<!-- Empty — wiki-lint is up to date. -->` if empty
 
-The helper skips `index.md`, `log.md`, the `.archive/` tree, and the `auto-memory/` tree. If a regeneration would emit 200 or more lines, `IndexTooLargeError` is raised and the operator must consolidate (Check 9).
+The helper skips `index.md` and `log.md` at any depth (these names are reserved for system files this script manages; user pages named `index.md` or `log.md` anywhere in the wiki tree will also be skipped silently — name your pages differently). It also skips the `.archive/` and `auto-memory/` trees. If a regeneration would emit 200 or more lines, `IndexTooLargeError` is raised and the operator must consolidate (Check 9).
 
 ## Idempotency
 
@@ -226,4 +237,4 @@ Running `/wiki-lint` twice in a row with no new input is a safe no-op:
 1. Tier 1 exact-match dedup short-circuits already-merged content.
 2. Inbox files are deleted only after a successful merge (Phase 1e), so a second run finds an empty inbox.
 3. `index_builder.py` regenerates `index.md` deterministically — identical input produces identical output.
-4. The heartbeat in `wiki/local/log.md` is conditional — only the first run of each calendar day writes one, so a same-day re-run produces zero writes.
+4. Both log writes are guarded: the lint summary in Step 4a only fires when inbox processing produced changes, and the heartbeat in Step 4b only fires on the first invocation of each calendar day. A same-day re-run with no new inbox files produces zero writes anywhere on disk.

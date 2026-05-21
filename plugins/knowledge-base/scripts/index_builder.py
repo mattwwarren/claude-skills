@@ -71,7 +71,8 @@ def _collect_pages(wiki_dir: Path) -> dict[str, list[PageEntry]]:
 
     for md_file in sorted(wiki_dir.rglob("*.md")):
         # Skip index and log files at any depth (e.g., wiki/log.md, wiki/local/log.md).
-        # These names are reserved for system files this script manages.
+        # NOTE: any user page named "index.md" or "log.md" anywhere in the wiki tree
+        # will also be skipped — these names are reserved.
         if md_file.name in skip_names:
             continue
         # Skip archive and auto-memory trees
