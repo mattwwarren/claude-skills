@@ -1115,10 +1115,12 @@ These thresholds determine guard levels, not rejection. Tune as trust grows:
 
 In headless mode, after all pipeline logic completes, emit a sentinel-delimited JSON block as the final lines of stdout. The narrative friction reports remain above (still useful for tmux scrollback / post-mortem); this block is the parsing contract for `cw`.
 
+**Current emission contract: `schema_version: 2`.** The v3 fields (`risk`, `spec_findings`) and v3 status (`spec_blocked`) are documented in §"v3 additions (staged)" below and SHOULD NOT be emitted in production until the `claude-workspace` v3 parser PR merges. The risk-tier gate logic still runs (it's described in the gate-collapse table and Guard Matrix Axis 3); the v3 schema is purely about the structured-output payload shape. Until cw ships v3, the orchestrator omits these fields and routes `spec_blocked` outcomes through `blocked` + `blocker.reason: "agent_block"` for downstream-compatible degradation.
+
 ```
 <<<AUTO_DEV_RESULT
 {
-  "schema_version": 3,
+  "schema_version": 2,
   "ticket_id": "GEN-1234",
   "status": "shipped",
   "stage_reached": "stage5_post_create",
@@ -1129,13 +1131,6 @@ In headless mode, after all pipeline logic completes, emit a sentinel-delimited 
     "lines_actual": 47,
     "forbidden_touched": false
   },
-  "risk": {
-    "tag": "safe",
-    "source": "spec",
-    "spec_review": "SPEC_OK",
-    "rule_evidence": null
-  },
-  "spec_findings": [],
   "plan_source": "linear_existing",
   "branch": "dev/gen-1234-fix-login",
   "worktree_path": "/path/to/.cw/wt/abc/your-branch-name",
@@ -1164,6 +1159,28 @@ In headless mode, after all pipeline logic completes, emit a sentinel-delimited 
 }
 AUTO_DEV_RESULT>>>
 ```
+
+### v3 additions (staged — do NOT emit in production until cw v3 parser ships)
+
+When `schema_version: 3` becomes the emission contract, the payload gains:
+
+```jsonc
+{
+  "schema_version": 3,
+  // ... all v2 fields unchanged ...
+  "risk": {
+    "tag": "safe",            // or "sensitive" | "dangerous"
+    "source": "spec",          // or "default_no_spec"
+    "spec_review": "SPEC_OK",  // or "SHOULD_FIX" | "MUST_FIX" | "SPEC_MALFORMED" | "skipped_no_spec"
+    "rule_evidence": null      // or "<rule name>" | "user_declared"
+  },
+  "spec_findings": [],         // populated when status == "spec_blocked"
+}
+```
+
+v3 also adds the `spec_blocked` status and `spec_malformed` blocker reason — both produced by Step 1b.5. Until cw v3 ships, the pipeline still runs Step 1b.5 (interactive mode is unaffected); headless emission collapses `spec_blocked` → `blocked` with `blocker.reason: "agent_block"` and the findings stay in the narrative-output region above the JSON block.
+
+The field semantics for `risk` and `spec_findings` are documented in §"Field Notes" below — they apply when v3 emission is enabled, not before.
 
 ### Status Enum (closed)
 

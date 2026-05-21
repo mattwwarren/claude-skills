@@ -86,6 +86,8 @@ Special case: if the spec lists `~N` for a file's line count and the actual chan
 
 #### Check 4 — Risk tag honesty
 
+> **Maintenance:** The path-pattern table below is a verbatim copy of [ADR 0004 §"Path-pattern heuristics"](../../../docs/adr/0004-risk-tier-vocabulary.md#path-pattern-heuristics-auto-derive). When ADR 0004 is updated (new patterns added, rules re-bucketed, quarterly classifier refresh against `claude auto-mode defaults`), this block MUST be updated in lockstep. The ADR is the canonical source; this restatement exists because it is the agent's operational logic — pointing to the ADR alone leaves a future editor unaware that the agent needs syncing.
+
 Apply the path-pattern heuristics from ADR 0004 against every entry in `## Target files`:
 
 **Sensitive (soft_deny) signals:**
