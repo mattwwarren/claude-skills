@@ -69,12 +69,12 @@ date: YYYY-MM-DD
 - `large`: anything else
 - If uncertain, default `large`. Auto-dev will not complain about over-classification; under-classification causes auto-merge of work that should have gated.
 
-**`risk_tag` rules** (mirror `/auto-dev` issue #2 — risk-tier):
-- `safe`: docs, tests, isolated features, non-shared utility code
-- `sensitive`: auth, billing, migrations, secrets handling, multi-tenant data paths, shared bases with 3+ consumers, CI/CD config
-- `dangerous`: anything `sensitive` PLUS destructive defaults, irreversible schema changes, cross-org data joins, production-write side effects
+**`risk_tag` rules** (per [ADR 0004](../../../../docs/adr/0004-risk-tier-vocabulary.md) — aliases the `claude auto-mode` classifier buckets):
+- `safe` (aliases `allow`): docs, tests, isolated features, non-shared utility code — work that matches only `allow`-bucket rules in `claude auto-mode defaults`
+- `sensitive` (aliases `soft_deny`): auth, billing, migrations, secrets handling, multi-tenant data paths, shared bases with 3+ consumers, CI/CD config, `.claude/` config files — work that matches one or more `soft_deny`-bucket rules (e.g., "Self-Modification", "Permission Grant", "Production Deploy", "Modify Shared Resources")
+- `dangerous` (aliases `hard_deny`): anything `sensitive` PLUS destructive defaults, irreversible schema changes, cross-org data joins, production-write side effects, weakening the classifier itself — work that matches one or more `hard_deny`-bucket rules (e.g., "Data Exfiltration", "Auto-Mode Bypass")
 
-When in doubt, escalate one level. The spec-reviewer (#2) validates this; auto-dev's risk gate will force a human checkpoint on sensitive/dangerous regardless of scope.
+When in doubt, escalate one level. The [spec-reviewer](../spec-reviewer/) validates this against the same heuristics; auto-dev's risk gate will force a human checkpoint on sensitive/dangerous regardless of scope (per [ADR 0004](../../../../docs/adr/0004-risk-tier-vocabulary.md) §"Path-pattern heuristics").
 
 ### Body sections (in this order, exactly these headings)
 
@@ -291,4 +291,4 @@ NONE
 
 - **[auto-dev](../auto-dev/)** — primary consumer of this spec
 - **superpowers:brainstorming** — soft dependency for divergent phase on freeform input
-- **spec-reviewer** (#2, not yet shipped) — validates this spec's scope/risk honesty before any code work
+- **[spec-reviewer](../spec-reviewer/)** — validates this spec's scope/risk honesty before any code work (per [ADR 0004](../../../../docs/adr/0004-risk-tier-vocabulary.md))
