@@ -104,9 +104,11 @@ Everything else runs to completion or exits with a structured error.
 
 ### Gate-Collapse Table
 
-All 19 rows define the deterministic headless action for every interactive gate in the pipeline:
+All rows define the deterministic headless action for every interactive gate in the pipeline.
 
 > **Maintenance:** the `expected 2` and `hard-cap at 5` cycle values appear in 6 locations across this file. See the maintenance note in Step 3b.5 for the full sync list before editing the cycle-related rows here.
+
+> **Maintenance (risk-tier rows):** rows tagged "**risk:**" mirror Checkpoint 1 headless clauses and the Axis 3 table in the Guard Matrix. When tuning risk-tier gate behavior, update all three surfaces together — gate-collapse table rows here, Checkpoint 1 numbered clause list, and Axis 3 table. ADR 0004 carries vocabulary; behavior changes do NOT belong in the ADR.
 
 | Stage / gate | Headless behavior |
 |---|---|
@@ -424,8 +426,11 @@ Parse the agent's output:
   - Interactive: present findings via AskUserQuestion. Options: "Fix the spec and re-review, override and proceed anyway, skip ticket, or abort?". On fix: send the spec back through `/spec-author` (or hand-edit) and re-spawn this step. On override: log the override decision in `friction_highlights` and proceed.
   - Headless: EXIT `spec_blocked` with the findings in the structured output payload under `spec_findings`. Post the findings to Linear as a comment with the spec snippet and the per-finding `spec_evidence` / `rule_evidence` quotes. The branch is NOT created.
 - **`SPEC_MALFORMED`** → EXIT `blocked` with `blocker.reason: "spec_malformed"` (both modes). A malformed spec cannot be reviewed; fix the shape before retrying.
+- **Agent failure / timeout / no recognizable output** → EXIT `blocked` with `blocker.reason: "agent_block"`. Surface the error verbatim. Distinct from `SPEC_MALFORMED` (which the agent returns when the spec is unparseable) — this covers the case where the agent itself failed to produce any output.
 
 After this step, the parsed `risk_tag` from the spec frontmatter is the canonical value used by Checkpoint 1 and Checkpoint 3 risk-tier gates. If the spec passed review, the tag is trusted; if the spec was overridden in interactive mode, the tag is still applied (the override is about the spec-review findings, not the gate logic).
+
+**Spec mutation after review:** if the user amends the spec while answering ambiguity questions in Step 1c (e.g., bumps `risk_tag` after a scope-related ambiguity is surfaced), the pipeline does NOT automatically re-run spec-review on the amended spec. The canonical values for Checkpoint 1 and Checkpoint 3 come from the version that passed Step 1b.5. If a substantive amendment changes the `risk_tag` or significantly restructures `## Target files`, re-invoke `/spec-reviewer` manually before continuing — the cost of a stale review on a sensitive ticket is silent under-gating.
 
 ### Step 1c: Ambiguity Verification
 
@@ -1209,9 +1214,12 @@ Other `blocker.reason` values are reserved for future use; consumers should trea
 
 **`risk`** — the risk-tier read from the spec frontmatter, plus provenance and validation outcome:
 ```json
-{"tag": "safe" | "sensitive" | "dangerous", "source": "spec" | "default_no_spec", "spec_review": "SPEC_OK" | "SHOULD_FIX" | "MUST_FIX" | "SPEC_MALFORMED" | "skipped_no_spec", "rule_evidence": "<rule name>" | null}
+{"tag": "safe" | "sensitive" | "dangerous", "source": "spec" | "default_no_spec", "spec_review": "SPEC_OK" | "SHOULD_FIX" | "MUST_FIX" | "SPEC_MALFORMED" | "skipped_no_spec", "rule_evidence": "<rule name>" | "user_declared" | null}
 ```
-`rule_evidence` is populated when spec-reviewer cited a specific `auto-mode` classifier rule (e.g., "Self-Modification", "Permission Grant") as the basis for the tag. Null when `tag: "safe"` or when no spec was present.
+`rule_evidence` semantics:
+- `<rule name>` (e.g., `"Self-Modification"`, `"Permission Grant"`): spec-reviewer's heuristic fired on a specific path-pattern → classifier rule mapping. The rule name comes from `claude auto-mode defaults` (see [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md)).
+- `"user_declared"`: the spec author chose a tier higher than the heuristic produced (over-classification — common when the author has context the heuristic doesn't know). The tag is trusted; no specific rule fired.
+- `null`: only when `tag: "safe"` AND no signals fired, OR when `source: "default_no_spec"`. Consumers should never see `null` paired with `sensitive` or `dangerous` — that combination signals a parser bug.
 
 **`spec_findings`** — populated when `status="spec_blocked"`. List of structured items, one per MUST_FIX finding from spec-reviewer:
 ```json
@@ -1237,6 +1245,6 @@ Empty (`[]`) when the status is anything else. The cw orchestrator can render th
 
 **`schema_version: 3`** — increment when fields are added or semantics change so `cw` can version-gate its parser.
 - v2 added the `no_op` status (Stage 1 pre-flight already-satisfied path); a v1-only parser routes unknown statuses through the synthetic-block fallback. Cross-repo coordination: `claude-workspace#81` ships the v2 parser.
-- **v3 adds (this ticket, #2):** the `risk` object (Axis 3 from the Guard Matrix), the `spec_findings` array, the `spec_blocked` status, the `spec_malformed` blocker reason, and the `stage1_spec_review` stage_reached value. v2-only parsers will treat `spec_blocked` as an unknown status and route it through the synthetic-block fallback (acceptable degradation — the human still sees the findings in the narrative output above the JSON block). The risk gate behavior is fully described in the gate-collapse table; consumers can adopt the v3 schema incrementally. Cross-repo coordination: a `claude-workspace` PR for the v3 parser side should land before this skill begins emitting `schema_version: 3` in production.
+- **v3 adds (this ticket, #2):** the `risk` object (Axis 3 from the Guard Matrix), the `spec_findings` array, the `spec_blocked` status, the `spec_malformed` blocker reason, and the `stage1_spec_review` stage_reached value. v2-only parsers will treat `spec_blocked` as an unknown status and route it through the synthetic-block fallback (acceptable degradation — the human still sees the findings in the narrative output above the JSON block, but `cw`'s automated `next_actions` field will not include the v3-specific `"user_rewrite_spec"` recovery instruction). The risk gate behavior is fully described in the gate-collapse table; consumers can adopt the v3 schema incrementally. **Cross-repo coordination:** a `claude-workspace` PR for the v3 parser side MUST merge before this skill begins emitting `schema_version: 3` in production. Until the cw v3 parser ships, this skill should continue emitting `schema_version: 2` (omitting the `risk`, `spec_findings` fields and the `spec_blocked` status) and treat the risk-tier gate as documentation-only — interactive mode is unaffected; headless mode falls back to v2 status semantics.
 
 **Interactive mode:** this block is NOT emitted. Structured output is headless-only.

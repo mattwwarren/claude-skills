@@ -70,6 +70,8 @@ When in doubt, escalate one tier. Under-classification causes auto-merge of work
 
 - **No change to existing spec-author schema.** Spec-author (#1, already shipped) uses `safe | sensitive | dangerous` in its frontmatter rules and example. This ADR ratifies the choice rather than changing it. The spec-author rules section gets a small update to cite the classifier mapping for clarity, but the field values don't move.
 
+- **Bootstrap exemption for tooling development.** The first PR that ships this gating system (issue #2 itself) is not gated by the system it introduces — by definition it cannot be. Subsequent PRs that modify the gating logic itself (auto-dev.md, the spec-reviewer agent, this ADR's heuristics) fall under the `Self-Modification` rule and would be classified `sensitive` by the heuristic. That is the correct behavior — the system gating itself is desirable, not circular. For the bootstrap-only case (a PR shipping a fix to spec-reviewer before spec-reviewer is widely adopted), maintainers can route around the gate by hand-running spec-review out-of-band; this is not a separate code path, just an operational note that the first invocation of any self-gating system is exempt from its own gate by necessity.
+
 ## Alternatives considered
 
 ### Rewrite the spec schema to use `allow | soft_deny | hard_deny`

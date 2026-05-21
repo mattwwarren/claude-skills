@@ -58,6 +58,8 @@ The spec MUST include all required frontmatter fields (`spec_version`, `ticket_i
 
 Missing fields or sections → MUST_FIX, citing exactly what's missing. Do not continue to later checks until shape is fixed; a partial spec doesn't yield meaningful findings on scope/risk/criteria.
 
+**`spec_version` validation:** verify the value is a known version. Currently the only known version is `1`. Unknown versions → SHOULD_FIX (`Unknown spec_version: <N>. Known: 1. Proceeding with best-effort review using v1 rubric — findings may be inaccurate if the schema changed.`). Proceed to subsequent checks anyway; flagging the mismatch is enough.
+
 #### Check 2 — Open questions block status
 
 If `## Open questions` contains anything other than the literal string `NONE`, the spec is NOT ready for `/auto-dev`. This is MUST_FIX with severity escalated — the spec author needs to resolve open questions with a human before any review or implementation can proceed.
@@ -189,6 +191,14 @@ Group findings by check. Within a check, order MUST_FIX before SHOULD_FIX.
 **Input:** a spec doc (or just its frontmatter and `## Target files` section).
 
 **Goal:** apply only Check 3 (scope tier) and Check 4 (risk tag) — the cheapest, highest-signal checks. Use when a caller wants a fast "are the tiers honest?" answer without the full review.
+
+**Null-guard:** Mode 2 skips Check 1 (schema completeness), so it cannot assume required fields are present. Before applying Check 3 or Check 4, verify the relevant frontmatter fields exist:
+
+- If `scope_tier` is absent → return MUST_FIX on Check 3: `Missing required field "scope_tier" in frontmatter — cannot evaluate scope honesty.`
+- If `risk_tag` is absent → return MUST_FIX on Check 4: `Missing required field "risk_tag" in frontmatter — cannot evaluate risk honesty.`
+- If both are absent → return both MUST_FIX findings; do NOT short-circuit.
+
+Do not attempt to compare against a missing field — null comparisons produce meaningless output.
 
 Output is identical to Mode 1 but only includes findings from those two checks. If both pass:
 
