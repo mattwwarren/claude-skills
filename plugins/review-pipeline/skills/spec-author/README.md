@@ -29,4 +29,4 @@ A single markdown file at `specs/<slug>-<date>.md` (or caller-specified path). F
 
 - **[auto-dev](../auto-dev/)** — primary consumer
 - **superpowers:brainstorming** — soft dep, divergent phase
-- **spec-reviewer** (issue #2, not yet shipped) — validates this spec before any code work
+- **[spec-reviewer](../spec-reviewer/)** — validates this spec before any code work (per [ADR 0004](../../../../docs/adr/0004-risk-tier-vocabulary.md))

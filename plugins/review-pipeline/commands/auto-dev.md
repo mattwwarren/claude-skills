@@ -33,12 +33,18 @@ flowchart TD
 
     Hygiene --> S1[Stage 1: Plan]
     S1 --> PlanSrc{Plan in Linear?}
-    PlanSrc -->|Yes| Ambig[Ambiguity Scan]
-    PlanSrc -->|No| AskPlan[AskUserQuestion: approve plan?]
-    AskPlan --> Ambig
+    PlanSrc -->|Yes| SpecRev[Step 1b.5: Spec Review]
+    PlanSrc -->|No| GenPlan[Generate Plan] --> SpecRev
+    SpecRev --> SpecOK{Spec review?}
+    SpecOK -->|MUST_FIX| AskSpec[AskUserQuestion: fix spec] --> SpecRev
+    SpecOK -->|OK / SHOULD_FIX| Ambig[Ambiguity Scan]
     Ambig --> AmbigFound{Ambiguities?}
-    AmbigFound -->|Yes| AskAmbig[AskUserQuestion: resolve each] --> ScopeCheck
-    AmbigFound -->|No| ScopeCheck{Scope tier?}
+    AmbigFound -->|Yes| AskAmbig[AskUserQuestion: resolve each] --> RiskCheck
+    AmbigFound -->|No| RiskCheck{risk_tag?}
+
+    RiskCheck -->|sensitive or dangerous| AskPlan[AskUserQuestion: approve plan]
+    RiskCheck -->|safe| ScopeCheck{Scope tier?}
+    AskPlan --> ScopeCheck
 
     ScopeCheck -->|Small: ≤10 files, ≤500 lines| S2Small[Stage 2: Implement auto]
     ScopeCheck -->|Large| AskImpl[AskUserQuestion: approve impl?]
@@ -47,8 +53,8 @@ flowchart TD
     S2Large --> S3
 
     S3 --> Findings{Review findings?}
-    Findings -->|Clean / SHOULD_FIX Small| S4[Stage 4: PR Creation]
-    Findings -->|Clean / SHOULD_FIX Large| AskReview[AskUserQuestion] --> S4
+    Findings -->|Clean / SHOULD_FIX Small safe-or-sensitive| S4[Stage 4: PR Creation]
+    Findings -->|Clean / SHOULD_FIX Large or dangerous| AskReview[AskUserQuestion] --> S4
     Findings -->|MUST_FIX| AskFix[AskUserQuestion: fix loop] --> S2Large
 
     S4 --> AskPR[AskUserQuestion: create PR?]
@@ -59,8 +65,8 @@ flowchart TD
 
     classDef stage fill:#1e3a5f,stroke:#4a90e2,color:#fff
     classDef checkpoint fill:#5c3317,stroke:#d4a017,color:#fff
-    class S0,S1,S2Small,S2Large,S3,S4,S5,Hygiene,Ambig stage
-    class AskPlan,AskImpl,AskReview,AskFix,AskPR,AskCI,AskAmbig checkpoint
+    class S0,S1,S2Small,S2Large,S3,S4,S5,Hygiene,Ambig,SpecRev,GenPlan stage
+    class AskPlan,AskImpl,AskReview,AskFix,AskPR,AskCI,AskAmbig,AskSpec checkpoint
 ```
 
 Checkpoints (amber) are automation gates — AUTO-SKIP for Small + Linear-authored plans, AskUserQuestion otherwise. See **Guard Matrix** below for the full rule set.
@@ -70,6 +76,8 @@ Checkpoints (amber) are automation gates — AUTO-SKIP for Small + Linear-author
 ## Headless Mode
 
 Pass `--headless` to run the pipeline with no interactive prompts. Every `AskUserQuestion` call is replaced by the deterministic action in the gate-collapse table below.
+
+> **Risk-tier override (per ADR 0004).** Headless mode honors scope-based defaults ONLY when the spec's `risk_tag` is `safe`. `sensitive` forces a plan-approval exit regardless of scope; `dangerous` forces both plan-approval and review-approval exits regardless of scope. The risk gates take precedence over the scope gates — see the gate-collapse table rows tagged "risk:". When no spec is found, the pipeline treats `risk_tag` as `safe` and logs a `friction_highlights` entry `"risk_tag_assumed_safe_no_spec"`; the spec-author / spec-reviewer pair is the supported way to assert a non-`safe` tag.
 
 **Purpose:** autonomous orchestrator dispatch from `cw` (`mattwwarren/claude-workspace`). Issues cw#56–#59 are built against this contract and consume the structured output defined in the Appendix.
 
@@ -96,26 +104,35 @@ Everything else runs to completion or exits with a structured error.
 
 ### Gate-Collapse Table
 
-All 19 rows define the deterministic headless action for every interactive gate in the pipeline:
+All rows define the deterministic headless action for every interactive gate in the pipeline.
 
 > **Maintenance:** the `expected 2` and `hard-cap at 5` cycle values appear in 6 locations across this file. See the maintenance note in Step 3b.5 for the full sync list before editing the cycle-related rows here.
 
+> **Maintenance (risk-tier rows):** rows tagged "**risk:**" mirror Checkpoint 1 headless clauses and the Axis 3 table in the Guard Matrix. When tuning risk-tier gate behavior, update all three surfaces together — gate-collapse table rows here, Checkpoint 1 numbered clause list, and Axis 3 table. ADR 0004 carries vocabulary; behavior changes do NOT belong in the ADR.
+
 | Stage / gate | Headless behavior |
 |---|---|
-| S1 plan, plan in Linear | AUTO-SKIP plan-approval question (ambiguity scan still runs) |
-| S1 plan, no Linear plan, small | Generate → AUTO-APPROVE (ambiguity scan still runs) |
+| S1 plan, plan in Linear | AUTO-SKIP plan-approval question (spec-review + ambiguity scan still run) |
+| S1 plan, no Linear plan, small + `risk_tag: safe` | Generate → AUTO-APPROVE (spec-review + ambiguity scan still run) |
+| S1 plan, no Linear plan, small + `risk_tag: sensitive` or `dangerous` (**risk:**) | Generate → EXIT `plan_pending_approval` (risk-tier overrides scope) |
 | S1 plan, no Linear plan, large | Generate → EXIT `plan_pending_approval` (post to Linear, no branch) |
+| S1 spec-review SPEC_OK or only SHOULD_FIX | AUTO-CONTINUE to ambiguity scan |
+| S1 spec-review MUST_FIX | EXIT `spec_blocked` (post findings to Linear as a comment, no branch) |
+| S1 spec-review SPEC_MALFORMED | EXIT `blocked` with `blocker.reason: "spec_malformed"` |
 | S1 ambiguity scan, no ambiguities | AUTO-CONTINUE |
 | S1 ambiguity scan, ambiguities found | EXIT `ambiguities_pending_resolution` (post ambiguity list to Linear as a comment, no branch) |
 | S1 pre-flight finds ticket already satisfied | EXIT `no_op` (no branch, `next_actions: ["close_issue_as_completed"]`) |
 | S1 scope-limit hit | EXIT `scope_exceeded` |
 | S1 forbidden-area hit | EXIT `forbidden_area` |
+| S1 plan extracted + `risk_tag: sensitive` or `dangerous` (**risk:**) | EXIT `plan_pending_approval` after spec-review + ambiguity scan complete (risk-tier forces gate even on pre-authored plans) |
 | S2 impl checkpoint (any scope) | AUTO-CONTINUE — never gate |
 | S2 BLOCK or 2x failure | EXIT `blocked` with `blocker.reason: "impl_failed"` |
 | S3 review (any scope) | Always run reviewers |
 | S3 MUST_FIX (any scope) | Run fix loop; expected 2 cycles, hard-cap at 5 |
 | S3 fix-loop, Small + sparse fix (Step 3b.5 criteria all hold) | Skip re-review → S4. Append `"rereview_skipped_sparse"` to `friction_highlights` |
-| S3 review clean / SHOULD_FIX, small | AUTO-CONTINUE → S4 |
+| S3 review clean / SHOULD_FIX, small + `risk_tag: safe` | AUTO-CONTINUE → S4 |
+| S3 review clean / SHOULD_FIX, small + `risk_tag: sensitive` (**risk:**) | AUTO-CONTINUE → S4 (sensitive forces plan gate, NOT review gate — already gated at Checkpoint 1) |
+| S3 review clean / SHOULD_FIX, small + `risk_tag: dangerous` (**risk:**) | EXIT `review_pending_approval` (dangerous forces both gates regardless of scope) |
 | S3 review clean / SHOULD_FIX, large | EXIT `review_pending_approval` (post-fix-loop diff, branch pushed, no PR) |
 | S3 MUST_FIX persists after 5 cycles | EXIT `blocked` with `blocker.reason: "review_blocked"` |
 | S3 fix-loop cycle 3+ OR scope growth at any cycle | Append to `friction_highlights`, set `health.fix_loop_escalated: true`, continue |
@@ -166,7 +183,7 @@ The main session aggregates these reports per the rule documented in the Headles
 
 ## Guard Matrix
 
-Two independent axes control approval automation.
+Three independent axes control approval automation. Risk tier overrides scope tier — a `sensitive` or `dangerous` ticket forces a human gate at plan approval (and `dangerous` also at review) regardless of how small the scope is.
 
 **Axis 1 — Plan source (determines plan checkpoint):**
 
@@ -175,7 +192,7 @@ Two independent axes control approval automation.
 | Plan found in Linear issue (or issue description is sufficient) | AUTO-SKIP — pre-approved by authoring it |
 | No plan / partial plan only | AskUserQuestion |
 
-**Axis 2 — Scope tier (determines impl + review checkpoints):**
+**Axis 2 — Scope tier (determines impl + review checkpoints when risk is `safe`):**
 
 | Tier | Criteria |
 |------|----------|
@@ -188,6 +205,20 @@ Two independent axes control approval automation.
 | Review (clean / SHOULD_FIX only) | AUTO-ACCEPT | AskUserQuestion |
 | Review (MUST_FIX) | AskUserQuestion (always) | AskUserQuestion (always) |
 | PR creation | AskUserQuestion (always) | AskUserQuestion (always) |
+
+**Axis 3 — Risk tier (overrides Axis 2 when non-`safe`, per [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md)):**
+
+Read from the spec's `risk_tag` frontmatter field. When no spec is found, default to `safe` (and log `friction_highlights` entry `"risk_tag_assumed_safe_no_spec"`). Spec-reviewer (Step 1b.5) validates the tag and surfaces under-classification as MUST_FIX before the gate is applied.
+
+| Tag | Plan Checkpoint | Review Checkpoint | Rationale |
+|-----|----------------|-------------------|-----------|
+| `safe` | per Axis 1 + Axis 2 | per Axis 2 | No override — scope-based defaults apply |
+| `sensitive` | AskUserQuestion (always) | per Axis 2 | Force human plan gate; if implementation lands clean, scope-based review gate is sufficient |
+| `dangerous` | AskUserQuestion (always) | AskUserQuestion (always) | Force human gate on both ends regardless of scope or review outcome |
+
+Headless equivalents: `sensitive` → EXIT `plan_pending_approval` at Checkpoint 1; `dangerous` → EXIT `plan_pending_approval` at Checkpoint 1 AND `review_pending_approval` at Checkpoint 3 (if it ever reaches Checkpoint 3 in a re-entered run).
+
+**Precedence:** when Axis 2 and Axis 3 both say "AskUserQuestion", the gate fires once (not twice). When Axis 3 says "AskUserQuestion" and Axis 2 says "AUTO-ACCEPT", the gate fires per Axis 3.
 
 ---
 
@@ -360,6 +391,47 @@ Spawn a **Plan** agent (`subagent_type: "Plan"`, `run_in_background: true`):
   - **Recommendation**: PROCEED | EXIT_FOR_HUMAN_REVIEW
   ```
 
+### Step 1b.5: Spec Review
+
+After a plan is in hand (extracted from the ticket in Step 1a OR generated by the Plan agent in Step 1b), run the spec-reviewer agent against it BEFORE the ambiguity scan. The two reviewers cover different lenses:
+
+- **Spec-reviewer** asks "is the spec internally honest?" — does scope match target files, does risk tag match path patterns, are acceptance criteria testable, are sections complete.
+- **Ambiguity scan** (Step 1c) asks "is the ticket interpretation right?" — does the plan match what the ticket actually asked for.
+
+A plan can pass one and fail the other. Both run; both can block.
+
+**This step only runs when a spec-shaped artifact is present.** A spec-shaped artifact is one that includes the frontmatter and body sections defined by [`/spec-author`](../skills/spec-author/SKILL.md). When the plan is a freeform agent-generated text without spec frontmatter:
+
+- Log: `Spec review: skipped (plan is not spec-shaped). Risk tag defaults to "safe".`
+- Append to `friction_highlights` (in headless mode): `"risk_tag_assumed_safe_no_spec"`
+- Proceed to Step 1c
+
+This is a deliberate gap — we don't force every plan through spec-author. Authors who care about the risk gate run `/spec-author` first; authors who don't get the scope-based defaults and the existing safety nets.
+
+**When a spec IS present:** spawn the **Spec Reviewer** agent (`subagent_type: "Spec Reviewer"`, `run_in_background: true`) in Mode 1 (full validation).
+
+**Prompt must include:**
+- The full spec doc (frontmatter + body), inlined verbatim
+- The source ticket (description + ALL comments) or freeform description
+- Mode declaration: `Mode: plan-time validation`
+- Reference to [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md) for risk-tag heuristics (the rule names the rubric cites)
+- The friction protocol block
+- The Health Check block (verbatim from Step 1b)
+
+Parse the agent's output:
+
+- **`SPEC_OK`** → proceed to Step 1c. Log: `Spec review: clean. risk_tag=<tag>, scope_tier=<tier>.`
+- **`SHOULD_FIX` only** → log the findings, proceed to Step 1c. These are advisory.
+- **`MUST_FIX`** → behavior depends on mode:
+  - Interactive: present findings via AskUserQuestion. Options: "Fix the spec and re-review, override and proceed anyway, skip ticket, or abort?". On fix: send the spec back through `/spec-author` (or hand-edit) and re-spawn this step. On override: log the override decision in `friction_highlights` and proceed.
+  - Headless: EXIT `spec_blocked` with the findings in the structured output payload under `spec_findings`. Post the findings to Linear as a comment with the spec snippet and the per-finding `spec_evidence` / `rule_evidence` quotes. The branch is NOT created.
+- **`SPEC_MALFORMED`** → EXIT `blocked` with `blocker.reason: "spec_malformed"` (both modes). A malformed spec cannot be reviewed; fix the shape before retrying.
+- **Agent failure / timeout / no recognizable output** → EXIT `blocked` with `blocker.reason: "agent_block"`. Surface the error verbatim. Distinct from `SPEC_MALFORMED` (which the agent returns when the spec is unparseable) — this covers the case where the agent itself failed to produce any output.
+
+After this step, the parsed `risk_tag` from the spec frontmatter is the canonical value used by Checkpoint 1 and Checkpoint 3 risk-tier gates. If the spec passed review, the tag is trusted; if the spec was overridden in interactive mode, the tag is still applied (the override is about the spec-review findings, not the gate logic).
+
+**Spec mutation after review:** if the user amends the spec while answering ambiguity questions in Step 1c (e.g., bumps `risk_tag` after a scope-related ambiguity is surfaced), the pipeline does NOT automatically re-run spec-review on the amended spec. The canonical values for Checkpoint 1 and Checkpoint 3 come from the version that passed Step 1b.5. If a substantive amendment changes the `risk_tag` or significantly restructures `## Target files`, re-invoke `/spec-reviewer` manually before continuing — the cost of a stale review on a sensitive ticket is silent under-gating.
+
 ### Step 1c: Ambiguity Verification
 
 After a plan is in hand (whether extracted from Linear or generated by the Plan agent), run an ambiguity scan against the ticket BEFORE proceeding to scope classification. This step runs in every case — including the auto-skip path where the plan was authored in Linear. A pre-approved plan is not the same as a plan free of ambiguity; the human authored it but may not have caught every interpretive gap.
@@ -398,33 +470,45 @@ If you catch yourself drafting prose that explains *why* the agent isn't needed 
    - `NO_AMBIGUITIES` → AUTO-CONTINUE to Step 1d.
    - `AMBIGUITIES` → EXIT `ambiguities_pending_resolution`. Post the ambiguity list to the Linear ticket as a comment (one numbered question per item, with the plan's current interpretation and the alternatives) and include the structured list in the result payload under `ambiguities`. The branch is NOT created. The cw orchestrator surfaces the questions to the human; once answered (either by updating the ticket description / comments or by re-invoking with explicit overrides), the pipeline can be re-entered.
 
-### Step 1d: Scope Classification
+### Step 1d: Scope + Risk Classification
 
-From the plan (existing or generated), classify scope:
+From the plan (existing or generated), classify scope AND risk:
 
 1. Count planned files and estimated line changes
 2. Check if any planned files touch forbidden areas (migrations, auth/security core, CI/CD, shared base classes with 3+ consumers)
-3. Classify:
+3. Classify scope:
    - **Small:** ≤10 files AND ≤500 lines AND no forbidden-area touches
    - **Large:** >10 files OR >500 lines OR touches forbidden areas
 
-4. **Constraint enforcement** (if `--scope-limit small` is active):
+4. Read risk tag:
+   - If a spec was reviewed in Step 1b.5: take the `risk_tag` value from the spec frontmatter (trusted — already validated by spec-reviewer).
+   - If no spec was present: default to `safe` and log the assumption (see Step 1b.5).
+   - Per [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md), the tag is one of: `safe` | `sensitive` | `dangerous`.
+
+5. **Constraint enforcement** (if `--scope-limit small` is active):
    - If classified Large: **AskUserQuestion:** "Ticket <id> exceeds scope limit (estimated N files, ~M lines). Skip this ticket, or abort pipeline?"
 
-5. **Constraint enforcement** (if `--forbidden <areas>` is active):
+6. **Constraint enforcement** (if `--forbidden <areas>` is active):
    - If plan touches any forbidden area: **AskUserQuestion:** "Ticket <id> touches forbidden area (<area>). Skip this ticket, or abort pipeline?"
 
 ### Checkpoint 1 (Plan Approval)
 
-**If plan was auto-skipped** (existing plan found): Skip this checkpoint entirely.
+The plan-approval gate fires when ANY of the following hold (precedence: risk tier overrides plan source overrides scope):
 
-**If plan was generated or built on partial:**
+1. The plan was generated or built on partial (Axis 1 — not pre-approved by being in the ticket), OR
+2. The scope tier is `large` (Axis 2), OR
+3. The `risk_tag` is `sensitive` or `dangerous` (Axis 3 — per [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md))
+
+**If none hold** (plan auto-skipped AND scope small AND risk `safe`): Skip this checkpoint entirely.
+
+**If any hold:**
 
 Present to user:
 - Ticket summary
-- Plan source (generated fresh / built on partial)
+- Plan source (extracted from Linear / generated fresh / built on partial)
 - File list + estimated scope (files/lines)
 - Scope classification (Small / Large)
+- **Risk tag** (`safe` / `sensitive` / `dangerous`) — if non-`safe`, cite the rule_evidence from spec-reviewer that supported the tag
 - Phase 1 test approach
 - Phase 2 implementation approach
 - Friction report highlights (skip if NONE)
@@ -435,7 +519,14 @@ Present to user:
 - **Adjust** → re-plan with user's adjustments, re-present
 - **Skip** → move to next ticket in queue
 
-**Headless** (clauses are evaluated in order; first match wins): If plan agent reported `pre-flight: already satisfied` → EXIT `no_op` (see Step 1e) — this preempts every other clause below, including scope and forbidden-area rejections, since there is nothing to implement. Otherwise: if plan in Linear → AUTO-SKIP plan-approval question (ambiguity scan in Step 1c still runs and may exit `ambiguities_pending_resolution`). If plan generated + small → AUTO-APPROVE and proceed (Step 1c still gates on ambiguities). If plan generated + large → EXIT `plan_pending_approval` (post plan to Linear, no branch — ambiguity scan is bypassed since the human will see the plan and ambiguities together when reviewing the Linear post). If `--scope-limit small` rejects → EXIT `scope_exceeded`. If `--forbidden` rejects → EXIT `forbidden_area`.
+**Headless** (clauses are evaluated in order; first match wins):
+1. Plan agent reported `pre-flight: already satisfied` → EXIT `no_op` (see Step 1e) — preempts everything else since there is nothing to implement.
+2. `--scope-limit small` rejects on a Large plan → EXIT `scope_exceeded`.
+3. `--forbidden` matches → EXIT `forbidden_area`.
+4. `risk_tag` is `sensitive` or `dangerous` (any scope, any plan source) → EXIT `plan_pending_approval` (post plan + risk-tag rationale to Linear, no branch). **Risk tier overrides plan source** — even a Linear-extracted plan exits here when the spec declared `sensitive` or `dangerous`.
+5. Plan in Linear + `risk_tag: safe` → AUTO-SKIP plan-approval question (ambiguity scan in Step 1c still runs).
+6. Plan generated + small + `risk_tag: safe` → AUTO-APPROVE and proceed.
+7. Plan generated + large → EXIT `plan_pending_approval` (post plan to Linear, no branch — ambiguity scan is bypassed since the human will see the plan and ambiguities together when reviewing the Linear post).
 
 ### Step 1e: Pre-flight Already-Satisfied Check
 
@@ -612,7 +703,12 @@ All reviewers run with `run_in_background: true`.
 
 Consolidate review results: deduplicate, sort by severity, group by file.
 
-**Small scope + (NO_ISSUES or SHOULD_FIX only) → AUTO-ACCEPT.** Log:
+The review-approval gate fires when ANY of the following hold (precedence: risk tier overrides scope):
+
+1. The scope tier is `large` (Axis 2), OR
+2. The `risk_tag` is `dangerous` (Axis 3 — per [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md)). Note: `sensitive` does NOT force the review gate — it forced the plan gate at Checkpoint 1, and clean review on small scope is sufficient to proceed.
+
+**Small scope + `risk_tag: safe` or `sensitive` + (NO_ISSUES or SHOULD_FIX only) → AUTO-ACCEPT.** Log:
 - Review outcome: "Review clean" or "N SHOULD_FIX items noted — auto-accepted per small scope"
 - List SHOULD_FIX items for transparency
 
@@ -621,12 +717,13 @@ Consolidate review results: deduplicate, sort by severity, group by file.
 - Present SHOULD_FIX findings if any
 - "MUST_FIX findings block shipping. Fix and re-review, skip fixes and ship anyway, skip ticket, or abort?"
 
-**Large scope (any result) → AskUserQuestion:**
+**Large scope OR `risk_tag: dangerous` (any result) → AskUserQuestion:**
 - Present full consolidated review report
+- If non-`safe` risk: note the rule_evidence from spec-reviewer
 - If MUST_FIX: "Fix these issues and re-review, or abort?"
 - If clean or SHOULD_FIX only: "Review complete. Proceed to PR creation?"
 
-**Headless:** Always run reviewers. MUST_FIX → run fix loop (expected 2 cycles, hard-cap at 5; cycles 3+ or scope growth append to `friction_highlights` and set `health.fix_loop_escalated: true`). Clean/SHOULD_FIX + small → AUTO-CONTINUE to S4. Clean/SHOULD_FIX + large → EXIT `review_pending_approval`. MUST_FIX persists after 5 cycles → EXIT `blocked` with `blocker.reason: "review_blocked"`.
+**Headless:** Always run reviewers. MUST_FIX → run fix loop (expected 2 cycles, hard-cap at 5; cycles 3+ or scope growth append to `friction_highlights` and set `health.fix_loop_escalated: true`). Clean/SHOULD_FIX + small + `risk_tag: safe` or `sensitive` → AUTO-CONTINUE to S4. Clean/SHOULD_FIX + large OR `risk_tag: dangerous` → EXIT `review_pending_approval`. MUST_FIX persists after 5 cycles → EXIT `blocked` with `blocker.reason: "review_blocked"`.
 
 ### Step 3b: Fix Loop (when MUST_FIX needs fixing)
 
@@ -1018,6 +1115,8 @@ These thresholds determine guard levels, not rejection. Tune as trust grows:
 
 In headless mode, after all pipeline logic completes, emit a sentinel-delimited JSON block as the final lines of stdout. The narrative friction reports remain above (still useful for tmux scrollback / post-mortem); this block is the parsing contract for `cw`.
 
+**Current emission contract: `schema_version: 2`.** The v3 fields (`risk`, `spec_findings`) and v3 status (`spec_blocked`) are documented in §"v3 additions (staged)" below and SHOULD NOT be emitted in production until the `claude-workspace` v3 parser PR merges. The risk-tier gate logic still runs (it's described in the gate-collapse table and Guard Matrix Axis 3); the v3 schema is purely about the structured-output payload shape. Until cw ships v3, the orchestrator omits these fields and routes `spec_blocked` outcomes through `blocked` + `blocker.reason: "agent_block"` for downstream-compatible degradation.
+
 ```
 <<<AUTO_DEV_RESULT
 {
@@ -1061,15 +1160,38 @@ In headless mode, after all pipeline logic completes, emit a sentinel-delimited 
 AUTO_DEV_RESULT>>>
 ```
 
+### v3 additions (staged — do NOT emit in production until cw v3 parser ships)
+
+When `schema_version: 3` becomes the emission contract, the payload gains:
+
+```jsonc
+{
+  "schema_version": 3,
+  // ... all v2 fields unchanged ...
+  "risk": {
+    "tag": "safe",            // or "sensitive" | "dangerous"
+    "source": "spec",          // or "default_no_spec"
+    "spec_review": "SPEC_OK",  // or "SHOULD_FIX" | "MUST_FIX" | "SPEC_MALFORMED" | "skipped_no_spec"
+    "rule_evidence": null      // or "<rule name>" | "user_declared"
+  },
+  "spec_findings": [],         // populated when status == "spec_blocked"
+}
+```
+
+v3 also adds the `spec_blocked` status and `spec_malformed` blocker reason — both produced by Step 1b.5. Until cw v3 ships, the pipeline still runs Step 1b.5 (interactive mode is unaffected); headless emission collapses `spec_blocked` → `blocked` with `blocker.reason: "agent_block"` and the findings stay in the narrative-output region above the JSON block.
+
+The field semantics for `risk` and `spec_findings` are documented in §"Field Notes" below — they apply when v3 emission is enabled, not before.
+
 ### Status Enum (closed)
 
 | Status | Meaning |
 |---|---|
 | `shipped` | PR created with auto-merge enabled; CI wait skipped |
 | `no_op` | Stage 1 pre-flight verification found all targeted changes already in the desired state; no branch created; `next_actions: ["close_issue_as_completed"]`. Distinct from `blocked` — this is a healthy outcome, not a failure |
-| `plan_pending_approval` | Large scope — plan generated and posted to Linear; no branch created; awaiting human approval |
+| `plan_pending_approval` | Plan posted to Linear; no branch created; awaiting human approval. Triggered by Large scope, `risk_tag: sensitive`, or `risk_tag: dangerous` (any scope, any plan source) |
 | `ambiguities_pending_resolution` | Plan was clear enough to proceed by tier rules, but the Step 1c ambiguity scan surfaced clarifying questions; posted to Linear; no branch created; awaiting human answers |
-| `review_pending_approval` | Large scope — fix loop complete, branch pushed, no PR; awaiting human review approval |
+| `spec_blocked` | Step 1b.5 spec-reviewer returned MUST_FIX findings; spec is not honest enough to proceed (under-classified risk, missing acceptance criteria, etc); posted to Linear; no branch created; awaiting spec rewrite |
+| `review_pending_approval` | Fix loop complete, branch pushed, no PR; awaiting human review approval. Triggered by Large scope OR `risk_tag: dangerous` |
 | `merge_gate_blocked` | Small scope — prior pipeline PR still open; cannot create next PR until gate clears |
 | `scope_exceeded` | `--scope-limit small` rejected a Large ticket before impl started |
 | `forbidden_area` | `--forbidden` constraint matched a planned file; ticket rejected before impl started |
@@ -1085,6 +1207,7 @@ When `status: "blocked"`, the `blocker.reason` field carries one of:
 |---|---|
 | `impl_failed` | Implementation agent returned BLOCK or failed quality gates after 2 attempts |
 | `review_blocked` | MUST_FIX findings persisted after 5 fix-loop cycles (the hard cap) |
+| `spec_malformed` | Step 1b.5 spec-reviewer returned `SPEC_MALFORMED` — the spec doc could not be parsed (e.g., broken frontmatter, missing all body sections). Distinct from `spec_blocked` (parseable but dishonest) — this is structural and needs a re-author |
 | `agent_block` | Any other agent returned friction level BLOCK that the pipeline could not auto-resolve |
 
 Other `blocker.reason` values are reserved for future use; consumers should treat unknown reasons as opaque strings and surface them to the user verbatim.
@@ -1100,10 +1223,26 @@ Other `blocker.reason` values are reserved for future use; consumers should trea
 - `shipped` → `"stage5_post_create"`
 - `no_op` → `"stage1_pre_flight"`
 - `plan_pending_approval` → `"stage1_plan"`
+- `spec_blocked` → `"stage1_spec_review"`
 - `review_pending_approval` → `"stage3_review"`
 - `merge_gate_blocked` → `"stage4_merge_gate"`
 - `scope_exceeded` / `forbidden_area` → `"stage1_scope"`
-- `blocked` → whichever stage produced the BLOCK; mirror this in `blocker.stage`.
+- `blocked` → whichever stage produced the BLOCK; mirror this in `blocker.stage` (e.g., `"stage1_spec_review"` for `spec_malformed`).
+
+**`risk`** — the risk-tier read from the spec frontmatter, plus provenance and validation outcome:
+```json
+{"tag": "safe" | "sensitive" | "dangerous", "source": "spec" | "default_no_spec", "spec_review": "SPEC_OK" | "SHOULD_FIX" | "MUST_FIX" | "SPEC_MALFORMED" | "skipped_no_spec", "rule_evidence": "<rule name>" | "user_declared" | null}
+```
+`rule_evidence` semantics:
+- `<rule name>` (e.g., `"Self-Modification"`, `"Permission Grant"`): spec-reviewer's heuristic fired on a specific path-pattern → classifier rule mapping. The rule name comes from `claude auto-mode defaults` (see [ADR 0004](../../../docs/adr/0004-risk-tier-vocabulary.md)).
+- `"user_declared"`: the spec author chose a tier higher than the heuristic produced (over-classification — common when the author has context the heuristic doesn't know). The tag is trusted; no specific rule fired.
+- `null`: only when `tag: "safe"` AND no signals fired, OR when `source: "default_no_spec"`. Consumers should never see `null` paired with `sensitive` or `dangerous` — that combination signals a parser bug.
+
+**`spec_findings`** — populated when `status="spec_blocked"`. List of structured items, one per MUST_FIX finding from spec-reviewer:
+```json
+{"check": "<check name>", "what": "...", "why": "...", "fix": "...", "spec_evidence": "...", "rule_evidence": "<optional>", "ticket_evidence": "<optional>"}
+```
+Empty (`[]`) when the status is anything else.
 
 **`next_actions`** — advisory list `cw` can act on without prose-parsing. Empty for terminal success. Examples:
 - `"wait_for_ci"` — auto-merge is pending CI; cw can poll
@@ -1112,6 +1251,8 @@ Other `blocker.reason` values are reserved for future use; consumers should trea
 - `"user_approve_review"` — large scope branch pushed; cw should notify user for review
 - `"user_resolve_ambiguities"` — Step 1c surfaced ambiguities; cw should notify user; answers belong on the Linear ticket before re-invoking
 - `"close_issue_as_completed"` — `no_op` outcome: the targeted change was already in place; cw should close the ticket as completed (the skill does not auto-close)
+- `"user_rewrite_spec"` — `spec_blocked` outcome: spec-reviewer surfaced MUST_FIX findings; cw should notify the spec author; re-author via `/spec-author` and re-invoke
+- `"user_fix_spec_shape"` — `spec_malformed` outcome: spec doc could not be parsed; cw should notify the spec author with the parse error
 
 **`ambiguities`** — populated when `status="ambiguities_pending_resolution"`. List of structured items, one per question. Each item:
 ```json
@@ -1119,6 +1260,8 @@ Other `blocker.reason` values are reserved for future use; consumers should trea
 ```
 Empty (`[]`) when the status is anything else. The cw orchestrator can render these as a Linear comment template or pass them to the user verbatim.
 
-**`schema_version: 2`** — increment when fields are added or semantics change so `cw` can version-gate its parser. v2 adds the `no_op` status (Stage 1 pre-flight already-satisfied path); a v1-only parser will route unknown statuses through the synthetic-block fallback, so consumers must update before producers emit v2. Cross-repo coordination: the `cw` parser side of v2 ships in `claude-workspace#81` and must merge before this skill begins emitting `schema_version: 2`.
+**`schema_version: 3`** — increment when fields are added or semantics change so `cw` can version-gate its parser.
+- v2 added the `no_op` status (Stage 1 pre-flight already-satisfied path); a v1-only parser routes unknown statuses through the synthetic-block fallback. Cross-repo coordination: `claude-workspace#81` ships the v2 parser.
+- **v3 adds (this ticket, #2):** the `risk` object (Axis 3 from the Guard Matrix), the `spec_findings` array, the `spec_blocked` status, the `spec_malformed` blocker reason, and the `stage1_spec_review` stage_reached value. v2-only parsers will treat `spec_blocked` as an unknown status and route it through the synthetic-block fallback (acceptable degradation — the human still sees the findings in the narrative output above the JSON block, but `cw`'s automated `next_actions` field will not include the v3-specific `"user_rewrite_spec"` recovery instruction). The risk gate behavior is fully described in the gate-collapse table; consumers can adopt the v3 schema incrementally. **Cross-repo coordination:** a `claude-workspace` PR for the v3 parser side MUST merge before this skill begins emitting `schema_version: 3` in production. Until the cw v3 parser ships, this skill should continue emitting `schema_version: 2` (omitting the `risk`, `spec_findings` fields and the `spec_blocked` status) and treat the risk-tier gate as documentation-only — interactive mode is unaffected; headless mode falls back to v2 status semantics.
 
 **Interactive mode:** this block is NOT emitted. Structured output is headless-only.

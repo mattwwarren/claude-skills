@@ -11,11 +11,11 @@ ADRs are numbered in order of acceptance. Once accepted, an ADR is rarely edited
 | [0001](0001-plugin-marketplace-structure.md) | Plugin marketplace structure | Accepted | 2026-05-19 |
 | [0002](0002-fleet-stream-observability-surface.md) | Fleet-stream observability via transcript JSONL | Accepted | 2026-05-20 |
 | [0003](0003-scheduling-mechanism-for-filesystem-bound-workflows.md) | Scheduling mechanism for filesystem-bound workflows | Accepted | 2026-05-20 |
-| 0004 | Risk-tier vocabulary (planned) | Deferred | — |
+| [0004](0004-risk-tier-vocabulary.md) | Risk-tier vocabulary for spec-reviewer | Accepted | 2026-05-21 |
 
 ## Planned ADRs
 
-- **0004 — Risk-tier vocabulary for spec-reviewer.** To be authored alongside the implementation of [#2 (spec-reviewer + risk-tier)](https://github.com/mattwwarren/claude-skills/issues/2). The proposed direction (alias the `claude auto-mode` classifier's `allow`/`soft_deny`/`hard_deny` buckets rather than invent a parallel taxonomy) is captured in [`docs/research/claude-code-agent-architecture.md`](../research/claude-code-agent-architecture.md) §"`claude auto-mode` — classifier surface". Held off from being an ADR now because implementation may surface constraints that change the decision; better to write it with evidence in hand.
+_(none currently)_
 
 ## Format
 

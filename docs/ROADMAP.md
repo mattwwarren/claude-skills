@@ -21,7 +21,7 @@ Sequenced so each tier unlocks the next. Within a tier, items are independent an
 
 | # | Title | Status | Depends on |
 |---|---|---|---|
-| [#2](https://github.com/mattwwarren/claude-skills/issues/2) | `spec-reviewer` + risk-tier | ⬜ | #1 (consumes the spec schema, defines risk tag in same schema) |
+| [#2](https://github.com/mattwwarren/claude-skills/issues/2) | `spec-reviewer` + risk-tier | 🔵 | in-progress (PR pending) — consumes #1 spec schema; ADR 0004 ships with implementation |
 | [#3](https://github.com/mattwwarren/claude-skills/issues/3) | `follow-up-sweeper` cron | ⬜ | none (standalone) |
 
 ### Tier 2 — Knowledge base port
