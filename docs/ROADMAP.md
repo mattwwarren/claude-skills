@@ -15,7 +15,7 @@ Sequenced so each tier unlocks the next. Within a tier, items are independent an
 | # | Title | Status | Why first |
 |---|---|---|---|
 | [#1](https://github.com/mattwwarren/claude-skills/issues/1) | `spec-author` skill | ⬜ | Every other ticket benefits from a real spec schema. Bootstraps itself — the first spec it produces could be for spec-author. |
-| [#9](https://github.com/mattwwarren/claude-skills/issues/9) | docs: model-cognizance | ⬜ | Cheap docs PR. Sets fleet-wide model-selection guidance referenced by later skills. |
+| [#9](https://github.com/mattwwarren/claude-skills/issues/9) | docs: model-cognizance | ✅ | merged via PR #19 (2026-05-21, auto-dev) |
 
 ### Tier 1 — Quality gates
 
