@@ -13,7 +13,7 @@ Promote inbox items into wiki pages, run quality checks, rebuild the index, and 
 - After a batch of `/wiki-lesson` or `/wiki-ingest` runs, to turn raw inbox entries into curated pages
 - Periodic maintenance pass over an established wiki (orphan pages, stale claims, oversized pages, broken cross-links)
 - Before a knowledge handoff, to ensure `index.md` and `log.md` reflect current state
-- As a scheduled cron job. Expected cadence: once per day, typically early morning. Scheduling itself is handled by a separate plugin — see ADR 0003.
+- As a scheduled cron job. Expected cadence: once per day, typically 6AM (the default cron-cadence baseline; this is configurable in the companion scheduling plugin — see ADR 0003).
 
 ## Configuration
 

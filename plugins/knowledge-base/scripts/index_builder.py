@@ -3,13 +3,11 @@
 Scans wiki/ for markdown files, reads their frontmatter title if available,
 and regenerates index.md with one entry per page grouped by directory.
 
-Respects the 200-line hard limit:
-  - At 180+ lines, consolidates directory entries (counts instead of per-page).
-  - At 200+ lines, raises IndexTooLargeError.
+Respects the 200-line hard limit: at 200+ lines, raises IndexTooLargeError.
 
 Usage:
     from scripts.index_builder import rebuild_index
-    rebuild_index(Path("wiki"))
+    rebuild_index(wiki_dir)
 
     # CLI:
     python3 scripts/index_builder.py [wiki_dir]
@@ -18,7 +16,7 @@ Usage:
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 _INDEX_FILE = "index.md"
@@ -28,7 +26,6 @@ _AUTO_MEMORY_DIR = "auto-memory"
 _INBOX_DIR = "inbox"
 
 _MAX_INDEX_LINES = 200
-_CONSOLIDATE_THRESHOLD = 180
 
 
 class IndexTooLargeError(Exception):
@@ -40,12 +37,6 @@ class PageEntry:
     path: Path
     title: str
     description: str = ""
-
-
-@dataclass
-class DirectoryGroup:
-    name: str
-    entries: list[PageEntry] = field(default_factory=list)
 
 
 def _read_frontmatter_title(path: Path) -> str | None:
@@ -76,7 +67,7 @@ def _collect_pages(wiki_dir: Path) -> dict[str, list[PageEntry]]:
     groups: dict[str, list[PageEntry]] = {}
 
     skip_names = {_INDEX_FILE, _LOG_FILE}
-    skip_dirs = {_ARCHIVE_DIR, _AUTO_MEMORY_DIR}
+    skip_dirs = {_ARCHIVE_DIR, _AUTO_MEMORY_DIR, _INBOX_DIR}
 
     for md_file in sorted(wiki_dir.rglob("*.md")):
         # Skip top-level special files

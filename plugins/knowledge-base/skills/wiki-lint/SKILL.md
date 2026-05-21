@@ -157,10 +157,10 @@ Count lines in `${WIKI_ROOT}index.md`.
 **Auto-consolidation** (when triggered): Replace per-page entries in a directory with a single directory entry: `- [Lessons](lessons/) — N pages (topic1, topic2, ...)`. Individual pages still exist; they're just not listed individually.
 
 ### Check 10: Log rotation
-If `${WIKI_ROOT}log.md` >500 lines, move entries older than 90 days to `${WIKI_ROOT}.archive/log-YYYY-MM.md`. Update `${WIKI_ROOT}log.md` to contain only recent entries.
+If `wiki/local/log.md` >500 lines, move entries older than 90 days to `${WIKI_ROOT}.archive/log-YYYY-MM.md`. Update `wiki/local/log.md` to contain only recent entries.
 
 ### Check 11: Heartbeat staleness
-Check `${WIKI_ROOT}log.md` for the most recent `heartbeat` entry. If the last heartbeat is older than the expected refresh window (typically >25 hours), warn: "Ingest pipeline may not be running."
+Check `wiki/local/log.md` for the most recent `heartbeat` entry. If the last heartbeat is older than the expected refresh window (typically >25 hours), warn: "Ingest pipeline may not be running."
 
 ### Check 12: Repo docs flag
 Scan inbox/new wiki pages for facts flagged as `[consider-pr-to: <repo>]`. Report them as a list for the user to action.
@@ -189,7 +189,7 @@ The helper is stdlib-only and deterministic — running it twice with no other c
 
 ## Phase 4: Log
 
-Append to `${WIKI_ROOT}log.md`:
+Append to `wiki/local/log.md`:
 ```markdown
 ## [YYYY-MM-DD] lint | Full lint run
 Inbox processed: N files → M pages updated, K new pages
@@ -201,6 +201,8 @@ Always append a heartbeat even if nothing was processed:
 ```markdown
 ## [YYYY-MM-DD] heartbeat | Lint run — nothing to process
 ```
+
+wiki-lint writes to the same `wiki/local/log.md` as wiki-lesson and wiki-ingest, so heartbeat staleness checks see all producer activity in one place.
 
 ## Index file format
 
@@ -218,7 +220,9 @@ The helper skips `index.md`, `log.md`, the `.archive/` tree, and the `auto-memor
 
 Running `/wiki-lint` twice in a row with no new input is a safe no-op:
 
+The "no diff" guarantee covers wiki page content and `index.md`; `wiki/local/log.md` always grows by exactly one heartbeat line per run (this is the deliberate aliveness signal that Check 11 reads).
+
 1. Tier 1 exact-match dedup short-circuits already-merged content.
 2. Inbox files are deleted only after a successful merge (Phase 1e), so a second run finds an empty inbox.
 3. `index_builder.py` regenerates `index.md` deterministically — identical input produces identical output.
-4. The only intentional second-run write is a fresh `heartbeat` line appended to `${WIKI_ROOT}log.md`.
+4. The only intentional second-run write is a fresh `heartbeat` line appended to `wiki/local/log.md`.
