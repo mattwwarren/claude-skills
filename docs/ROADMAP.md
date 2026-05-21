@@ -32,7 +32,7 @@ Per-skill so each one dogfoods the auto-dev pipeline independently.
 |---|---|---|---|
 | [#4](https://github.com/mattwwarren/claude-skills/issues/4) | port `wiki-lesson` (attrib @scottpcipriano) | ✅ | merged via PR #14 (2026-05-19, auto-dev) |
 | [#5](https://github.com/mattwwarren/claude-skills/issues/5) | port `wiki-ingest` | ✅ | merged via PR #16 (2026-05-20, auto-dev, 2 review cycles) |
-| [#6](https://github.com/mattwwarren/claude-skills/issues/6) | port `wiki-lint` | ⬜ | #4, #5 |
+| [#6](https://github.com/mattwwarren/claude-skills/issues/6) | port `wiki-lint` | ✅ | merged via PR #17 (2026-05-20, auto-dev, 3 review cycles) |
 | [#7](https://github.com/mattwwarren/claude-skills/issues/7) | port `wiki-install` | ⬜ | #4, #5, #6 |
 
 ### Tier 3 — Fleet infrastructure
