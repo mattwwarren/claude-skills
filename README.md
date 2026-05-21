@@ -116,6 +116,12 @@ See [CONCEPTS.md](CONCEPTS.md):
 - Session boundaries (work with finite context, not against it)
 - Agent orchestration (parallelize independent work)
 
+For subagent model selection (which model to pin on fanned-out work, and the
+Opus-credit-pressure spawn-refusal failure mode), see
+[docs/MODEL-GUIDANCE.md](docs/MODEL-GUIDANCE.md). Required reading before
+invoking any of the fleet-dispatching skills (`/auto-dev`, `/plan-executor`,
+`/pull-and-execute`) from an Opus main thread.
+
 ## Versioning
 
 This marketplace and each plugin follow [Semantic Versioning](https://semver.org/). Marketplace-wide changes are summarized in [CHANGELOG.md](CHANGELOG.md); per-plugin versions live in each plugin's `.claude-plugin/plugin.json`.

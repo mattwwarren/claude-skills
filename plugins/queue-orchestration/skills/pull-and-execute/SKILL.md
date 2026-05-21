@@ -7,6 +7,13 @@ description: Pull next queue item, spawn agent teams, review, and complete. Use 
 
 Claim the next work item from the queue, decompose it, spawn implementation agents, review the results, and complete the item. This is the execution engine for queued work.
 
+> **Model selection.** This skill fans out parallel implementation and review
+> subagents. Before invoking it, confirm the main thread is on Sonnet (not
+> Opus) — see [docs/MODEL-GUIDANCE.md](../../../../docs/MODEL-GUIDANCE.md) for
+> the credit-pressure spawn-refusal failure mode. Pin the child model
+> explicitly on every spawn (Sonnet for impl/review, Haiku for read-only).
+> Never use `model: "inherit"`.
+
 ## Invocation
 
 ```

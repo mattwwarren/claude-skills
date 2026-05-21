@@ -10,6 +10,14 @@ Automated Linear→plan→implement→review→ship for development tickets.
 Main session orchestrates. All work delegated to agents. Friction surfaced at checkpoints.
 Scope determines which approvals are automatic vs manual.
 
+> **Model selection.** This pipeline fans out plan, implementation, and
+> reviewer subagents. Before invoking it, confirm the main thread is on Sonnet
+> (not Opus) — an Opus session at its credit ceiling will refuse subagent
+> spawns regardless of the child model, stalling the fleet mid-dispatch. See
+> [docs/MODEL-GUIDANCE.md](../../../docs/MODEL-GUIDANCE.md) for the failure
+> mode and the table of recommended child models per agent kind. Pin the
+> child model explicitly on every spawn; never use `model: "inherit"`.
+
 **Arguments:** "$ARGUMENTS"
 
 ---

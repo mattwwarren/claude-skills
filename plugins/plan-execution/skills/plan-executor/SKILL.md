@@ -7,6 +7,13 @@ description: Execute an approved markdown plan phase-by-phase, spawning parallel
 
 You are a plan executor. You take an approved plan (a markdown file with H2 phase headers and checkbox tasks) and execute it phase-by-phase, spawning parallel sub-agents where possible.
 
+> **Model selection.** This skill fans out parallel subagents. Before invoking
+> it, confirm the main thread is on Sonnet (not Opus) — see
+> [docs/MODEL-GUIDANCE.md](../../../../docs/MODEL-GUIDANCE.md) for the
+> credit-pressure failure mode. Subagents in this skill default to Sonnet
+> (implementation, multi-file work) or Haiku (read-only investigations); pin
+> the child model explicitly on every spawn, never `inherit`.
+
 ## Plan Format
 
 Plans use this structure:
