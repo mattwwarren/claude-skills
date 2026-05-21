@@ -41,6 +41,7 @@ Parallel-agent code review, end-to-end auto-dev, PR follow-through. Bundles **14
 
 | Skill | What It Does |
 |-------|--------------|
+| [spec-author](plugins/review-pipeline/skills/spec-author/) | Author ticket-shaped specs that round-trip through `/auto-dev` |
 | [review](plugins/review-pipeline/skills/review/) | Parallel code review using specialized reviewer agents |
 | [auto-dev](plugins/review-pipeline/skills/auto-dev/) | Linear → plan → implement → review → ship pipeline |
 | [review-monitor](plugins/review-pipeline/skills/review-monitor/) | Follow PRs from first review through merge |
